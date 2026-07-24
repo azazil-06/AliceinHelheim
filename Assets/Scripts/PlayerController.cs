@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+//SourceItems contains all og char animations and background
+
 public class PlayerController : MonoBehaviour
 {
     //Body declarations
