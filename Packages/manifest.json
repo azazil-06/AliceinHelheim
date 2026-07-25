@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.tripo3d.unitybridge": "file:C:/Users/Aiswarya/Downloads/Tripo3d_Unity_Bridge-latest/Tripo3d_Unity_Bridge",
     "com.unity.2d.animation": "15.1.0",
     "com.unity.2d.aseprite": "5.0.3",
     "com.unity.2d.psdimporter": "14.0.3",
