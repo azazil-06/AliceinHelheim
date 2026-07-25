@@ -1,6 +1,10 @@
 name: Build project
 
-on: push
+on:
+  push:
+    paths:
+      - 'Assets/Scripts/auto.txt'
+  workflow_dispatch:
 
 jobs:
   buildForAllSupportedPlatforms:
