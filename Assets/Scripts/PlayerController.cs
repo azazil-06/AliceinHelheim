@@ -46,7 +46,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        moveInput = control.Player.Move.ReadValue<Vector2>(); 
+        moveInput = new Vector2 (control.Player.Move.ReadValue<Vector2>().x, 0f); //ignore y input
 
         
     }

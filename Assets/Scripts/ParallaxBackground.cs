@@ -16,7 +16,7 @@ public class ParallaxBackground : MonoBehaviour
     {
         startPos=transform.position.x;
         offset = transform.position - cam.transform.position;
-        length=GetComponent<SpriteRenderer>().bounds.size.x; 
+        if(!isFixed){ length=GetComponent<SpriteRenderer>().bounds.size.x; }
     }
 
     // Update is called once per frame
