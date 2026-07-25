@@ -9,30 +9,28 @@ on:
 jobs:
   buildForAllSupportedPlatforms:
     name: Build for ${{ matrix.targetPlatform }}
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         targetPlatform:
           - Android # Build an Android .apk standalone app.
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true
           
-      - name: Cache Unity Library
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         with:
           path: Library
           key: Library-${{ matrix.targetPlatform }}
           restore-keys: Library-
-
-      # ⚠️ The 'free-disk-space' step has been permanently removed for your local machine's safety.
-
-      - name: Build Unity Project
-        uses: game-ci/unity-builder@v4
+          
+      - if: matrix.targetPlatform == 'Android'
+        uses: jlumbroso/free-disk-space@v1.3.1
+        
+      - uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -40,8 +38,7 @@ jobs:
         with:
           targetPlatform: ${{ matrix.targetPlatform }}
           
-      - name: Upload Build
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: Build-${{ matrix.targetPlatform }}
           path: build/${{ matrix.targetPlatform }}
