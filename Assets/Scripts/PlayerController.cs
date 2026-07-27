@@ -15,7 +15,7 @@ public class PlayerController : MonoBehaviour
 
     //hardcoded var
     public Vector2 moveInput;
-    private float facing;
+    private float facing = 1f; //idle
 
 
 
@@ -47,6 +47,21 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         moveInput = new Vector2 (control.Player.Move.ReadValue<Vector2>().x, 0f); //ignore y input
+
+        // Check if the player is currently pressing a movement key  --idle animation
+        if(!Mathf.Approximately(moveInput.x, 0.0f))
+            {if (moveInput.x > 0f)
+            {
+                facing = 1f;
+            }
+            else if (moveInput.x < 0f)
+            {
+                facing = 0f;
+            }
+        }
+
+        // Apply to animator
+        playerAnimate.SetFloat("Facing", facing);
 
         
     }
