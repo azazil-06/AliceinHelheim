@@ -17,13 +17,6 @@ public class PlayerController : MonoBehaviour
     public Vector2 moveInput;
     private float facing = 1f; //idle
 
-
-
-
-
-
-
-    //least used
     void Awake()
     {
         control = new InputSystem_Actions();
@@ -34,10 +27,6 @@ public class PlayerController : MonoBehaviour
         control.Player.Enable();
     }
 
-
-
-
-
     void Start()
     {
         playerRB = GetComponent<Rigidbody2D>();
@@ -46,39 +35,34 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        moveInput = new Vector2 (control.Player.Move.ReadValue<Vector2>().x, 0f); //ignore y input
+        // 1. Read Input
+        moveInput = new Vector2(control.Player.Move.ReadValue<Vector2>().x, 0f); //ignore y input
 
-        // Check if the player is currently pressing a movement key  --idle animation
-        if(!Mathf.Approximately(moveInput.x, 0.0f))
-            {if (moveInput.x > 0f)
+        // 2. Uniform Deadzone for both directions (prevents input jitter/flicker)
+        bool isMoving = Mathf.Abs(moveInput.x) > 0.1f;
+        
+        if (isMoving)
+        {
+            if (moveInput.x > 0.1f)
             {
-                facing = 1f;
+                facing = 1f; // Moving Right
             }
-            else if (moveInput.x < 0f)
+            else if (moveInput.x < -0.1f)
             {
-                facing = 0f;
+                facing = 0f; // Moving Left
             }
         }
 
-        // Apply to animator
+        // 3. Animation Logic stays in Update for visual smoothness
+        playerAnimate.SetFloat("Motion", moveInput.x);
         playerAnimate.SetFloat("Facing", facing);
-
-        
+        playerAnimate.SetBool("isRunning", isMoving);
     }
 
     void FixedUpdate()
     {
-        Vector2 position = (Vector2)playerRB.position + moveInput * moveSpeed * Time.deltaTime;
+        // 4. Physics Logic ONLY in FixedUpdate, using Time.fixedDeltaTime
+        Vector2 position = (Vector2)playerRB.position + moveInput * moveSpeed * Time.fixedDeltaTime;
         playerRB.MovePosition(position);
-
-        //animation
-        playerAnimate.SetFloat("Motion", moveInput.x);
-         
     }
-
-
-
-
-
-
 }
