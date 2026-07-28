@@ -88,7 +88,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -126,7 +126,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -180,12 +180,12 @@ TextureImporter:
       name: running_0
       rect:
         serializedVersion: 2
-        x: 46
-        y: 286
-        width: 65
-        height: 59
+        x: 0
+        y: 256
+        width: 256
+        height: 256
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -202,12 +202,12 @@ TextureImporter:
       name: running_1
       rect:
         serializedVersion: 2
-        x: 168
-        y: 288
-        width: 74
-        height: 58
+        x: 256
+        y: 256
+        width: 256
+        height: 256
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -224,12 +224,12 @@ TextureImporter:
       name: running_2
       rect:
         serializedVersion: 2
-        x: 293
-        y: 289
-        width: 79
-        height: 58
+        x: 512
+        y: 256
+        width: 256
+        height: 256
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -246,12 +246,12 @@ TextureImporter:
       name: running_3
       rect:
         serializedVersion: 2
-        x: 420
-        y: 287
-        width: 80
-        height: 61
+        x: 768
+        y: 256
+        width: 256
+        height: 256
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -268,12 +268,12 @@ TextureImporter:
       name: running_4
       rect:
         serializedVersion: 2
-        x: 546
-        y: 286
-        width: 81
-        height: 62
+        x: 1024
+        y: 256
+        width: 256
+        height: 256
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -290,12 +290,12 @@ TextureImporter:
       name: running_5
       rect:
         serializedVersion: 2
-        x: 674
-        y: 284
-        width: 79
-        height: 64
+        x: 1280
+        y: 256
+        width: 256
+        height: 256
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -312,12 +312,12 @@ TextureImporter:
       name: running_6
       rect:
         serializedVersion: 2
-        x: 38
-        y: 156
-        width: 74
-        height: 64
+        x: 0
+        y: 0
+        width: 256
+        height: 256
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -334,12 +334,12 @@ TextureImporter:
       name: running_7
       rect:
         serializedVersion: 2
-        x: 172
-        y: 158
-        width: 67
-        height: 61
+        x: 256
+        y: 0
+        width: 256
+        height: 256
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -356,12 +356,12 @@ TextureImporter:
       name: running_8
       rect:
         serializedVersion: 2
-        x: 304
-        y: 159
-        width: 62
-        height: 61
+        x: 512
+        y: 0
+        width: 256
+        height: 256
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -374,209 +374,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: running_9
-      rect:
-        serializedVersion: 2
-        x: 426
-        y: 160
-        width: 67
-        height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 20cfe779ae363e1d0800000000000000
-      internalID: -3322702240854115326
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: running_10
-      rect:
-        serializedVersion: 2
-        x: 551
-        y: 161
-        width: 69
-        height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 861fc2792198c54d0800000000000000
-      internalID: -3144487726872727192
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: running_11
-      rect:
-        serializedVersion: 2
-        x: 677
-        y: 159
-        width: 70
-        height: 63
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0530738ca47653d50800000000000000
-      internalID: 6716387990177252176
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: running_12
-      rect:
-        serializedVersion: 2
-        x: 35
-        y: 29
-        width: 73
-        height: 65
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 65138690ab3e3d210800000000000000
-      internalID: 1356678300929896790
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: running_13
-      rect:
-        serializedVersion: 2
-        x: 163
-        y: 27
-        width: 73
-        height: 66
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 473d1f81ff8f9c830800000000000000
-      internalID: 4092075510961656692
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: running_14
-      rect:
-        serializedVersion: 2
-        x: 296
-        y: 26
-        width: 69
-        height: 66
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d044a67be1838fd50800000000000000
-      internalID: 6771223744328909837
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: running_15
-      rect:
-        serializedVersion: 2
-        x: 428
-        y: 28
-        width: 66
-        height: 63
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 1fc0c29af75076880800000000000000
-      internalID: -8617913316092932879
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: running_16
-      rect:
-        serializedVersion: 2
-        x: 560
-        y: 29
-        width: 63
-        height: 61
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 956bfdd68a4bc2510800000000000000
-      internalID: 1525793009262638681
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: running_17
-      rect:
-        serializedVersion: 2
-        x: 686
-        y: 30
-        width: 65
-        height: 59
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 17abc65c645fa03d0800000000000000
-      internalID: -3239507297630897551
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 7f06108577068174cadb9468992e24f2
     internalID: 0
     vertices: []
     indices: 
@@ -584,18 +386,12 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":256.0,"y":256.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       running_0: -1274967292748549190
       running_1: -825706690200963642
-      running_10: -3144487726872727192
-      running_11: 6716387990177252176
-      running_12: 1356678300929896790
-      running_13: 4092075510961656692
-      running_14: 6771223744328909837
-      running_15: -8617913316092932879
-      running_16: 1525793009262638681
-      running_17: -3239507297630897551
       running_2: -3341573891944662379
       running_3: 5720687236895615129
       running_4: 3627768386180016180
@@ -603,7 +399,6 @@ TextureImporter:
       running_6: -293817529664326686
       running_7: 5838302670885866014
       running_8: 8909633158273340939
-      running_9: -3322702240854115326
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

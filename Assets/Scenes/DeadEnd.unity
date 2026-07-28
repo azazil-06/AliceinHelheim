@@ -628,7 +628,7 @@ MonoBehaviour:
     Enabled: 1
     Time: 0.604
     Smoothing: 4.3
-    IgnoreY: 0
+    IgnoreY: 1
 --- !u!114 &430781422
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -681,7 +681,7 @@ Transform:
   m_GameObject: {fileID: 430781420}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.37, y: 7.3500004, z: -10}
+  m_LocalPosition: {x: 15.37, y: 7.3500004, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -701,7 +701,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineConfiner2D
   BoundingShape2D: {fileID: 1696458932}
   Damping: 0.5
-  SlowingDistance: 5
+  SlowingDistance: 4
   OversizeWindow:
     Enabled: 0
     MaxWindowSize: 0
@@ -882,7 +882,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.003921569, g: 0.13333334, b: 0.13333334, a: 0}
+  m_BackGroundColor: {r: 0.23529413, g: 0.57254905, b: 0.57254905, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -932,7 +932,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.366598, y: 6.89108, z: -10}
+  m_LocalPosition: {x: 15.366598, y: 6.89108, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2651,9 +2651,9 @@ Transform:
   m_GameObject: {fileID: 1510733578}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 19.15, y: 8.95, z: -0.66}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 15.29, y: 8.58, z: -0.66}
+  m_LocalScale: {x: 1.17, y: 1.17, z: 1.17}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 824056522}
   - {fileID: 2071638423}
@@ -2731,7 +2731,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 838f1d2b95f390542acc332e1b6b4360, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxBackground
-  isFixed: 0
+  isFixed: 1
   cam: {fileID: 519420028}
   parallaxEffect: 1
 --- !u!1 &1573125713
@@ -2858,7 +2858,7 @@ EdgeCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 8192
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -3230,9 +3230,9 @@ GameObject:
   - component: {fileID: 1862074975}
   - component: {fileID: 1862074974}
   - component: {fileID: 1862074973}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3307,8 +3307,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.05887413, y: 0.01881954}
-  m_Size: {x: 0.23945284, y: 0.6605862}
+  m_Offset: {x: -0.09106374, y: 0.032474697}
+  m_Size: {x: 0.46638727, y: 1.3251458}
   m_Direction: 0
 --- !u!50 &1862074976
 Rigidbody2D:
@@ -3325,7 +3325,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 1
+  m_GravityScale: 5
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -3391,7 +3391,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.42, y: 0.71}
+  m_Size: {x: 2.56, y: 2.56}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -3406,8 +3406,8 @@ Transform:
   m_GameObject: {fileID: 1862074972}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.37, y: 3.96, z: 0}
-  m_LocalScale: {x: 4, y: 4, z: 4}
+  m_LocalPosition: {x: 15.37, y: 3.96, z: 1.39}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
