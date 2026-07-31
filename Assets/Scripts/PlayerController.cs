@@ -79,7 +79,7 @@ public class PlayerController : MonoBehaviour
         // 3. Animation Logic stays in Update for visual smoothness
         playerAnimate.SetFloat("Motion", moveInput.x);
         playerAnimate.SetFloat("Facing", facing);
-        playerAnimate.SetBool("isRunning", isMoving && isGrounded);
+        playerAnimate.SetBool("isRunning", isMoving);
     }
 
     void FixedUpdate()
