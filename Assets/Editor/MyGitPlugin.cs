@@ -25,7 +25,7 @@ public class MyGitPlugin : EditorWindow
     [MenuItem("MyTools/GitHub Auto-Push")]
     public static void ShowWindow()
     {
-        var win = GetWindow<MyGitPlugin>("Git Tools");
+        var win = GetWindow<MyGitPlugin>("GitHub Tools");
         win.minSize = new Vector2(380, 540);
     }
 

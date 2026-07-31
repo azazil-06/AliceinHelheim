@@ -1,0 +1,20 @@
+{
+    "notepadText": "",
+    "ideas": [],
+    "tasks": [
+        {
+            "id": "11fffc87-237a-463a-a9a5-c53ad3b411d1",
+            "text": "Fix the jumping animation stutter",
+            "done": false,
+            "priority": 1,
+            "timestamp": "2026-07-31 23:04"
+        },
+        {
+            "id": "89a26457-fe51-440a-a3c4-5baf4ecd825d",
+            "text": "add slash animations",
+            "done": false,
+            "priority": 1,
+            "timestamp": "2026-07-31 23:05"
+        }
+    ]
+}
