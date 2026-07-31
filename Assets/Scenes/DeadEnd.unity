@@ -681,7 +681,7 @@ Transform:
   m_GameObject: {fileID: 430781420}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.079148, y: 7.3500004, z: -8.61}
+  m_LocalPosition: {x: 15.079148, y: 7.33, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -932,7 +932,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.075756, y: 6.89176, z: -8.61}
+  m_LocalPosition: {x: 15.075898, y: 6.89176, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8124,6 +8124,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   moveSpeed: 10
+  jumpMultiplier: 6
   moveInput: {x: 0, y: 0}
 --- !u!70 &1862074975
 CapsuleCollider2D:
@@ -8177,7 +8178,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 5
+  m_GravityScale: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -8258,7 +8259,7 @@ Transform:
   m_GameObject: {fileID: 1862074972}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.37, y: 3.96, z: 1.39}
+  m_LocalPosition: {x: 15.37, y: 3.94, z: 1.39}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
