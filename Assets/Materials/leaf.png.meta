@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: b5399d7026e281245b0c6d7062010583
+guid: 036cbcb5a5158ea4591bf917435372ee
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2670307187363243013
-    second: silhouette_character_3d_model_tripo_part_0_basecolor_0
+      213: 5781445747943558089
+    second: leaf_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,13 +126,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: silhouette_character_3d_model_tripo_part_0_basecolor_0
+      name: leaf_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1024
-        height: 1024
+        width: 16
+        height: 25
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bfb9a00d2c921fad0800000000000000
-      internalID: -2670307187363243013
+      spriteID: 9cb4e5eb642db3050800000000000000
+      internalID: 5781445747943558089
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      silhouette_character_3d_model_tripo_part_0_basecolor_0: -2670307187363243013
+      leaf_0: 5781445747943558089
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
