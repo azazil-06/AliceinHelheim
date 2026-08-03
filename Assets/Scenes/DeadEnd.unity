@@ -479,6 +479,7 @@ RectTransform:
   m_Children:
   - {fileID: 766245872}
   - {fileID: 959969288}
+  - {fileID: 545697615}
   - {fileID: 1390175979}
   - {fileID: 1617592111}
   m_Father: {fileID: 0}
@@ -532,7 +533,7 @@ MonoBehaviour:
       Offset: {x: 0, y: 0}
   CenterOnActivate: 1
   TargetOffset: {x: 0, y: 3.39, z: 0}
-  Damping: {x: 1.5, y: 1, z: 1}
+  Damping: {x: 2.5, y: 3, z: 1}
   Lookahead:
     Enabled: 1
     Time: 0.604
@@ -590,7 +591,7 @@ Transform:
   m_GameObject: {fileID: 430781420}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.015524, y: 7.33, z: -8.61}
+  m_LocalPosition: {x: 15.079148, y: 7.33, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -609,8 +610,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineConfiner2D
   BoundingShape2D: {fileID: 1696458932}
-  Damping: 0.5
-  SlowingDistance: 4
+  Damping: 0.98
+  SlowingDistance: 2
   OversizeWindow:
     Enabled: 0
     MaxWindowSize: 0
@@ -841,7 +842,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.01071, y: 6.89189, z: -8.61}
+  m_LocalPosition: {x: 15.07999, y: 6.90959, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -891,6 +892,95 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3259c3f0189e32c4f91593bb1184c40c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraScaleFix
+--- !u!1 &545697614
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 545697615}
+  - component: {fileID: 545697618}
+  - component: {fileID: 545697617}
+  - component: {fileID: 545697616}
+  m_Layer: 5
+  m_Name: attack
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &545697615
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 545697614}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.29, y: 0.29, z: 0.29}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 328632071}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: -65, y: 134}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &545697616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 545697614}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d54531977ecb194c95e2d3aa7a5d72a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.OnScreen.OnScreenButton
+  m_ControlPath: <Gamepad>/buttonWest
+--- !u!114 &545697617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 545697614}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0.78557706, b: 1, a: 0.48235294}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &545697618
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 545697614}
+  m_CullTransparentMesh: 1
 --- !u!1 &630170524
 GameObject:
   m_ObjectHideFlags: 0
@@ -918,9 +1008,9 @@ Transform:
   m_GameObject: {fileID: 630170524}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 15.88143, y: 6.48, z: 11.79}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 15.88143, y: 7.2, z: 12.86}
+  m_LocalScale: {x: 1.04, y: 1.04, z: 1.04}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 266805432}
   - {fileID: 1972484248}
@@ -1000,7 +1090,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxBackground
   isFixed: 0
   cam: {fileID: 519420028}
-  parallaxEffect: 1
+  parallaxEffect: 0.9
+  smoothing: 20
 --- !u!1 &707754036
 GameObject:
   m_ObjectHideFlags: 0
@@ -1111,6 +1202,7 @@ MonoBehaviour:
   isFixed: 0
   cam: {fileID: 519420028}
   parallaxEffect: 0.5
+  smoothing: 20
 --- !u!1 &766245871
 GameObject:
   m_ObjectHideFlags: 0
@@ -1651,6 +1743,7 @@ MonoBehaviour:
   isFixed: 0
   cam: {fileID: 519420028}
   parallaxEffect: 0.6
+  smoothing: 20
 --- !u!1 &1141317943
 GameObject:
   m_ObjectHideFlags: 0
@@ -1899,6 +1992,7 @@ MonoBehaviour:
   isFixed: 0
   cam: {fileID: 519420028}
   parallaxEffect: 0.8
+  smoothing: 20
 --- !u!1 &1181482957
 GameObject:
   m_ObjectHideFlags: 0
@@ -1926,7 +2020,7 @@ Transform:
   m_GameObject: {fileID: 1181482957}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 46.51, y: 6.7806, z: 1}
+  m_LocalPosition: {x: 49.54, y: 6.7806, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2345,6 +2439,7 @@ MonoBehaviour:
   isFixed: 1
   cam: {fileID: 519420028}
   parallaxEffect: 0
+  smoothing: 20
 --- !u!212 &1460746911
 SpriteRenderer:
   serializedVersion: 3
@@ -7368,6 +7463,7 @@ MonoBehaviour:
   isFixed: 0
   cam: {fileID: 519420028}
   parallaxEffect: 0.3
+  smoothing: 20
 --- !u!68 &1573125717
 EdgeCollider2D:
   m_ObjectHideFlags: 0
@@ -7591,10 +7687,10 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: -28.347967, y: 5.3736763}
-      - {x: -28.343315, y: -5.5192227}
-      - {x: 32.86555, y: -5.45537}
-      - {x: 32.77522, y: 5.2305474}
+    - - {x: -30.809942, y: 5.306528}
+      - {x: -30.77135, y: -5.7656775}
+      - {x: 35.730785, y: -5.5951996}
+      - {x: 35.977306, y: 5.3482413}
   m_UseDelaunayMesh: 1
 --- !u!4 &1696458933
 Transform:
@@ -7719,6 +7815,7 @@ MonoBehaviour:
   isFixed: 1
   cam: {fileID: 519420028}
   parallaxEffect: 0
+  smoothing: 20
 --- !u!1 &1862074972
 GameObject:
   m_ObjectHideFlags: 0
@@ -7775,7 +7872,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   moveSpeed: 10
-  jumpMultiplier: 4
+  jumpMultiplier: 6
+  lowJumpMultiplier: 13
+  attackLungeForce: 17
+  lungeFriction: 2
+  fallSpeedThreshold: 5.6
   moveInput: {x: 0, y: 0}
 --- !u!70 &1862074975
 CapsuleCollider2D:
@@ -7950,6 +8051,7 @@ MonoBehaviour:
   isFixed: 1
   cam: {fileID: 519420028}
   parallaxEffect: 0
+  smoothing: 30
 --- !u!199 &1938181360
 ParticleSystemRenderer:
   serializedVersion: 7
@@ -12794,7 +12896,7 @@ Transform:
   m_GameObject: {fileID: 1972484247}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 19.17, y: 0, z: 6.31}
+  m_LocalPosition: {x: 19.17, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12887,7 +12989,7 @@ Transform:
   m_GameObject: {fileID: 2054438054}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -11.699999, y: 6.7806, z: 1}
+  m_LocalPosition: {x: -14.16, y: 6.7806, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
