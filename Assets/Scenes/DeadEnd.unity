@@ -7873,10 +7873,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   moveSpeed: 10
   jumpMultiplier: 6
-  lowJumpMultiplier: 13
-  attackLungeForce: 17
+  lowJumpMultiplier: 6
+  attackLungeForce: 24
   lungeFriction: 2
-  fallSpeedThreshold: 5.6
+  fallThreshold: 5
   moveInput: {x: 0, y: 0}
 --- !u!70 &1862074975
 CapsuleCollider2D:
