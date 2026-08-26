@@ -8,16 +8,16 @@ public class LegMover : MonoBehaviour
 {
     [Header("References")]
     public Transform ikTarget;
-    public LegMover  opposingLeg;
+    public LegMover opposingLeg;
 
     [Header("Step Tuning")]
     public float stepDistance = 0.5f;
-    public float stepHeight   = 0.3f;
-    public float stepSpeed    = 6f;
+    public float stepHeight = 0.3f;
+    public float stepSpeed = 6f;
 
     [Header("Ground Detection")]
     public LayerMask groundLayer;
-    public float     groundRayLength = 5f;
+    public float groundRayLength = 5f;
 
     [Header("Debug (read-only)")]
     public bool isStepping;
@@ -26,7 +26,7 @@ public class LegMover : MonoBehaviour
     Vector3 _footAnchor;     // planted foot world position - locked every frame
     Vector3 _stepFrom;       // world pos where this step started
     Vector3 _stepTarget;     // world pos where this step is going
-    float   _t;
+    float _t;
 
     void Start()
     {
@@ -58,7 +58,7 @@ public class LegMover : MonoBehaviour
         _restLocalPos = transform.InverseTransformPoint(ikTarget.position);
 
         _footAnchor = ikTarget.position;
-        _stepFrom   = _footAnchor;
+        _stepFrom = _footAnchor;
         _stepTarget = _footAnchor;
     }
 
@@ -69,32 +69,32 @@ public class LegMover : MonoBehaviour
             // Keep foot firmly planted - resist parent bone dragging it
             ikTarget.position = _footAnchor;
 
-            Vector3 desired       = GetRestPosition();
-            bool    otherStepping = opposingLeg != null && opposingLeg.isStepping;
+            Vector3 desired = GetRestPosition();
+            bool otherStepping = opposingLeg != null && opposingLeg.isStepping;
 
-            if (!otherStepping && Vector2.Distance(desired, _footAnchor) > stepDistance)
+            if (!otherStepping && Vector3.Distance(desired, _footAnchor) > stepDistance)
             {
-                _stepFrom   = _footAnchor;
+                _stepFrom = _footAnchor;
                 _stepTarget = desired;
-                _t          = 0f;
-                isStepping  = true;
+                _t = 0f;
+                isStepping = true;
             }
         }
         else
         {
             _t += Time.deltaTime * stepSpeed;
-            _t  = Mathf.Clamp01(_t);
+            _t = Mathf.Clamp01(_t);
 
             Vector3 pos = Vector3.Lerp(_stepFrom, _stepTarget, _t);
-            pos.y      += Mathf.Sin(_t * Mathf.PI) * stepHeight;
+            pos.y += Mathf.Sin(_t * Mathf.PI) * stepHeight;
 
             ikTarget.position = pos;
 
             if (_t >= 1f)
             {
-                _footAnchor       = _stepTarget;
+                _footAnchor = _stepTarget;
                 ikTarget.position = _footAnchor;
-                isStepping        = false;
+                isStepping = false;
             }
         }
     }

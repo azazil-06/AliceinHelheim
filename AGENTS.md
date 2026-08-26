@@ -2,7 +2,7 @@
 - Project name: AliceinHelheim
 - Unity version: Unity 6000.5.9f1
 - Active game object:
-  - Name: effector
+  - Name: bone_17
   - Tag: Untagged
   - Layer: Default
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->

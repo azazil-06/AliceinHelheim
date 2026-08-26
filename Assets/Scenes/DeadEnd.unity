@@ -305,7 +305,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 66704999}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.0155453365, w: 0.9998792}
+  m_LocalRotation: {x: -0, y: -0, z: -0.0005424916, w: 0.9999999}
   m_LocalPosition: {x: 1.693, y: 0.016, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -452,17 +452,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 218595159}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ebaeb2c2c8a3f140916b5e4f3a1f032, type: 3}
+  m_Script: {fileID: 11500000, guid: 0c5f8edd953395f4a996d57e7efc21f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
-  ikTarget: {fileID: 2099134813}
-  opposingLeg: {fileID: 0}
+  ikTarget: {fileID: 1728881993}
+  opposingLeg: {fileID: 980866541}
   stepDistance: 0.5
   stepHeight: 0.3
   stepSpeed: 6
   groundLayer:
     serializedVersion: 2
-    m_Bits: 16384
+    m_Bits: 0
   groundRayLength: 5
   isStepping: 0
 --- !u!1 &227147286
@@ -490,7 +490,7 @@ Transform:
   m_GameObject: {fileID: 227147286}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0.9119403, w: 0.41032296}
-  m_LocalPosition: {x: -4.9764686, y: 3.1885812, z: 0}
+  m_LocalPosition: {x: -4.9099255, y: 3.3349748, z: 0}
   m_LocalScale: {x: 1.3513514, y: 1.3513514, z: 1.3513514}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -568,17 +568,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 265106390}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ebaeb2c2c8a3f140916b5e4f3a1f032, type: 3}
+  m_Script: {fileID: 11500000, guid: 0c5f8edd953395f4a996d57e7efc21f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
-  ikTarget: {fileID: 1837074268}
-  opposingLeg: {fileID: 0}
+  ikTarget: {fileID: 968606255}
+  opposingLeg: {fileID: 1285261232}
   stepDistance: 0.5
   stepHeight: 0.3
   stepSpeed: 6
   groundLayer:
     serializedVersion: 2
-    m_Bits: 16384
+    m_Bits: 0
   groundRayLength: 5
   isStepping: 0
 --- !u!1 &266805431
@@ -829,7 +829,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 414323984}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.20702651, w: 0.9783353}
+  m_LocalRotation: {x: -0, y: -0, z: 0.19784647, w: 0.9802331}
   m_LocalPosition: {x: 1.602, y: 0.003, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -943,7 +943,7 @@ Transform:
   m_GameObject: {fileID: 430781420}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.107204, y: 7.33, z: -8.61}
+  m_LocalPosition: {x: 15.079298, y: 7.33, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1194,7 +1194,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.1078825, y: 6.90961, z: -8.61}
+  m_LocalPosition: {x: 15.080129, y: 6.90959, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1444,7 +1444,7 @@ MonoBehaviour:
   cam: {fileID: 519420028}
   parallaxEffect: 0.9
   smoothing: 20
---- !u!1 &640270258
+--- !u!1 &684849118
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1452,28 +1452,28 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 640270259}
+  - component: {fileID: 684849119}
   m_Layer: 0
-  m_Name: Hind-F_IK_Target
+  m_Name: Hind-B-IK_Target
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &640270259
+--- !u!4 &684849119
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 640270258}
+  m_GameObject: {fileID: 684849118}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.4326384, w: -0.9015676}
-  m_LocalPosition: {x: 5.3191056, y: 3.5511045, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: 0.38558608, w: -0.9226719}
+  m_LocalPosition: {x: 2.5813773, y: 3.2171488, z: 0}
   m_LocalScale: {x: 1.3513514, y: 1.3513514, z: 1.3513514}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2095579782}
+  m_Father: {fileID: 2086660694}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &707754036
 GameObject:
@@ -1958,17 +1958,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 872906429}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ebaeb2c2c8a3f140916b5e4f3a1f032, type: 3}
+  m_Script: {fileID: 11500000, guid: 0c5f8edd953395f4a996d57e7efc21f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
-  ikTarget: {fileID: 1627774344}
-  opposingLeg: {fileID: 0}
+  ikTarget: {fileID: 1752961362}
+  opposingLeg: {fileID: 955156690}
   stepDistance: 0.5
   stepHeight: 0.3
   stepSpeed: 6
   groundLayer:
     serializedVersion: 2
-    m_Bits: 16384
+    m_Bits: 0
   groundRayLength: 5
   isStepping: 0
 --- !u!1 &955156688
@@ -2012,17 +2012,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 955156688}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ebaeb2c2c8a3f140916b5e4f3a1f032, type: 3}
+  m_Script: {fileID: 11500000, guid: 0c5f8edd953395f4a996d57e7efc21f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
-  ikTarget: {fileID: 66705000}
-  opposingLeg: {fileID: 0}
+  ikTarget: {fileID: 227147287}
+  opposingLeg: {fileID: 872906431}
   stepDistance: 0.5
   stepHeight: 0.3
   stepSpeed: 6
   groundLayer:
     serializedVersion: 2
-    m_Bits: 16384
+    m_Bits: 0
   groundRayLength: 5
   isStepping: 0
 --- !u!1 &959969287
@@ -2186,17 +2186,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 980866539}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ebaeb2c2c8a3f140916b5e4f3a1f032, type: 3}
+  m_Script: {fileID: 11500000, guid: 0c5f8edd953395f4a996d57e7efc21f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
-  ikTarget: {fileID: 1018467860}
-  opposingLeg: {fileID: 0}
+  ikTarget: {fileID: 1298404054}
+  opposingLeg: {fileID: 218595161}
   stepDistance: 0.5
   stepHeight: 0.3
   stepSpeed: 6
   groundLayer:
     serializedVersion: 2
-    m_Bits: 16384
+    m_Bits: 0
   groundRayLength: 5
   isStepping: 0
 --- !u!1 &985134047
@@ -2240,17 +2240,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 985134047}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ebaeb2c2c8a3f140916b5e4f3a1f032, type: 3}
+  m_Script: {fileID: 11500000, guid: 0c5f8edd953395f4a996d57e7efc21f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
-  ikTarget: {fileID: 1632299225}
-  opposingLeg: {fileID: 0}
+  ikTarget: {fileID: 1615928112}
+  opposingLeg: {fileID: 1323813287}
   stepDistance: 0.5
   stepHeight: 0.3
   stepSpeed: 6
   groundLayer:
     serializedVersion: 2
-    m_Bits: 16384
+    m_Bits: 0
   groundRayLength: 5
   isStepping: 0
 --- !u!1 &1018467859
@@ -2798,23 +2798,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8478553540853150096, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.95530224
+      value: 0.95369846
       objectReference: {fileID: 0}
     - target: {fileID: -8478553540853150096, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.2956311
+      value: 0.30076468
       objectReference: {fileID: 0}
     - target: {fileID: -8004350403799754019, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9854923
+      value: 0.97714025
       objectReference: {fileID: 0}
     - target: {fileID: -8004350403799754019, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.16972029
+      value: -0.21259584
       objectReference: {fileID: 0}
     - target: {fileID: -7792358231388735494, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.96799743
+      value: 0.95292145
       objectReference: {fileID: 0}
     - target: {fileID: -7792358231388735494, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.x
@@ -2826,7 +2826,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -7792358231388735494, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.25096017
+      value: 0.3032174
       objectReference: {fileID: 0}
     - target: {fileID: -7792358231388735494, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -2970,11 +2970,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -1241181609891957826, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9478829
+      value: 0.9473452
       objectReference: {fileID: 0}
     - target: {fileID: -1241181609891957826, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.31861904
+      value: -0.3202143
       objectReference: {fileID: 0}
     - target: {fileID: -1115199578167792966, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3074,15 +3074,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7166031464826943775, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.89524215
+      value: 0.90171534
       objectReference: {fileID: 0}
     - target: {fileID: 7166031464826943775, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.44558007
+      value: -0.43233034
       objectReference: {fileID: 0}
     - target: {fileID: 7531934617522495250, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.15704404
+      value: 0.1533998
       objectReference: {fileID: 0}
     - target: {fileID: 7531934617522495250, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.y
@@ -3090,7 +3090,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7531934617522495250, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.9875916
+      value: -0.98816425
       objectReference: {fileID: 0}
     - target: {fileID: 8021504926911765715, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3551,17 +3551,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 1285261230}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ebaeb2c2c8a3f140916b5e4f3a1f032, type: 3}
+  m_Script: {fileID: 11500000, guid: 0c5f8edd953395f4a996d57e7efc21f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
-  ikTarget: {fileID: 1224891287}
-  opposingLeg: {fileID: 0}
+  ikTarget: {fileID: 240048359}
+  opposingLeg: {fileID: 265106392}
   stepDistance: 0.5
   stepHeight: 0.3
   stepSpeed: 6
   groundLayer:
     serializedVersion: 2
-    m_Bits: 16384
+    m_Bits: 0
   groundRayLength: 5
   isStepping: 0
 --- !u!1 &1298404053
@@ -3605,6 +3605,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1323813286}
   - component: {fileID: 1323813287}
+  - component: {fileID: 1323813288}
   m_Layer: 0
   m_Name: Leg6
   m_TagString: Untagged
@@ -3636,17 +3637,39 @@ MonoBehaviour:
   m_GameObject: {fileID: 1323813285}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ebaeb2c2c8a3f140916b5e4f3a1f032, type: 3}
+  m_Script: {fileID: 11500000, guid: 0c5f8edd953395f4a996d57e7efc21f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
-  ikTarget: {fileID: 414323985}
+  ikTarget: {fileID: 684849119}
+  opposingLeg: {fileID: 985134049}
+  stepDistance: 0.5
+  stepHeight: 0.3
+  stepSpeed: 6
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  groundRayLength: 5
+  isStepping: 0
+--- !u!114 &1323813288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1323813285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c5f8edd953395f4a996d57e7efc21f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LegMover
+  ikTarget: {fileID: 0}
   opposingLeg: {fileID: 0}
   stepDistance: 0.5
   stepHeight: 0.3
   stepSpeed: 6
   groundLayer:
     serializedVersion: 2
-    m_Bits: 16384
+    m_Bits: 0
   groundRayLength: 5
   isStepping: 0
 --- !u!1 &1390175978
@@ -9074,7 +9097,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -0, y: -202}
+  m_AnchoredPosition: {x: 0, y: -201.97987}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1617592112
@@ -9509,6 +9532,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1673357268}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1752961361
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1752961362}
+  m_Layer: 0
+  m_Name: Hind-F_IK_Target
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1752961362
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1752961361}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: 0.4326384, w: -0.9015676}
+  m_LocalPosition: {x: 5.3191056, y: 3.5511045, z: 0}
+  m_LocalScale: {x: 1.3513514, y: 1.3513514, z: 1.3513514}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2095579782}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1801490032
 GameObject:
@@ -14891,37 +14945,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
---- !u!1 &2031545205
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2031545206}
-  m_Layer: 0
-  m_Name: Hind-B-IK_Target
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2031545206
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2031545205}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.385586, w: -0.92267185}
-  m_LocalPosition: {x: 2.5813773, y: 3.2171488, z: 0}
-  m_LocalScale: {x: 1.3513514, y: 1.3513514, z: 1.3513514}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2086660694}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2054438054
 GameObject:
   m_ObjectHideFlags: 0
@@ -15091,11 +15114,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.2D.IK.Runtime::UnityEngine.U2D.IK.CCDSolver2D
   m_ConstrainRotation: 1
-  m_SolveFromDefaultPose: 0
+  m_SolveFromDefaultPose: 1
   m_Weight: 1
   m_Chain:
     m_EffectorTransform: {fileID: 414323985}
-    m_TargetTransform: {fileID: 2031545206}
+    m_TargetTransform: {fileID: 684849119}
     m_TransformCount: 4
     m_Transforms:
     - {fileID: 294530455}
@@ -15128,7 +15151,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2031545206}
+  - {fileID: 684849119}
   m_Father: {fileID: 1163120165}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2095579780
@@ -15161,11 +15184,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.2D.IK.Runtime::UnityEngine.U2D.IK.CCDSolver2D
   m_ConstrainRotation: 1
-  m_SolveFromDefaultPose: 0
+  m_SolveFromDefaultPose: 1
   m_Weight: 1
   m_Chain:
     m_EffectorTransform: {fileID: 1627774344}
-    m_TargetTransform: {fileID: 640270259}
+    m_TargetTransform: {fileID: 1752961362}
     m_TransformCount: 4
     m_Transforms:
     - {fileID: 1163120168}
@@ -15198,7 +15221,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 640270259}
+  - {fileID: 1752961362}
   m_Father: {fileID: 1163120165}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2099134812

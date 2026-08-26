@@ -1,0 +1,173 @@
+[33mcommit 0fa5ed0ebaa856dc8538957cb4a3af79bd11de07[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: azazil <arjunprasadsa@gmail.com>
+Date:   Wed Aug 26 18:54:41 2026 +0530
+
+    d1
+
+[33mcommit 78fa874aac9f455925c446254e27b86db6d9e230[m
+Author: azazil <arjunprasadsa@gmail.com>
+Date:   Wed Aug 26 17:35:51 2026 +0530
+
+    spyder init (no working script)
+
+[33mcommit 3cc072ccebaac33bd2b880b6aa55e062f236319d[m
+Author: azazil <arjunprasadsa@gmail.com>
+Date:   Wed Aug 26 15:29:45 2026 +0530
+
+    removed unused files(opt)
+
+[33mcommit 9560f7b65da1075fc646b869fef00b3e004c6c77[m
+Author: azazil <arjunprasadsa@gmail.com>
+Date:   Wed Aug 26 13:09:29 2026 +0530
+
+    pre-render savepoint
+
+[33mcommit 2b248f97d4752112f627bf16cfc459c3ec146607[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Mon Aug 10 17:43:10 2026 +0530
+
+    minor fix
+
+[33mcommit 06f27295b35ca0b44dc6ca4a6614cc8988978f5b[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Mon Aug 3 13:24:56 2026 +0530
+
+    3-8-26
+
+[33mcommit 1883404410c20a8281fe73729c67c0a75b86aa4c[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Sun Aug 2 22:59:20 2026 +0530
+
+    Auto-commit on save: 2026-08-02 22:59:18
+
+[33mcommit 6c84d4a1982d5413fb481fcf25fbed39e5bdd178[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Sun Aug 2 22:29:45 2026 +0530
+
+    late night
+
+[33mcommit 95ebb9ea67002661242fa3e408fa62a6a7482171[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Fri Jul 31 23:15:05 2026 +0530
+
+    Auto-commit on save: 2026-07-31 23:15:04
+
+[33mcommit d8e2c868922fd5974b268ecd4dabdbba3a9379b4[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Fri Jul 31 14:03:22 2026 +0530
+
+    holy shiii
+
+[33mcommit d4ebb4fd99cc8f0a71d075a936f60871ba07937d[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Fri Jul 31 13:03:48 2026 +0530
+
+    jump added
+
+[33mcommit 3bd52ff15a2737a8b0d36e557e0ba35232bd2163[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Fri Jul 31 09:28:55 2026 +0530
+
+    Auto-commit on save: 2026-07-31 09:28:52
+
+[33mcommit 30b3cf01f7738ae95b22f52435a8add2e77f9931[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Tue Jul 28 20:40:56 2026 +0530
+
+    Auto-commit on save: 2026-07-28 20:40:55
+
+[33mcommit 28fd00c025902d51288f9b8e370227cc9f26b297[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Tue Jul 28 04:35:33 2026 +0530
+
+    Auto-commit on save: 2026-07-28 04:35:32
+
+[33mcommit b839052bbc5ee5fbdcf320d04c79bfc2bc032e2f[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Mon Jul 27 21:27:55 2026 +0530
+
+    d4
+
+[33mcommit b1fd7a27f8ba584671bc9afa686bd3353f7a5567[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Mon Jul 27 19:53:03 2026 +0530
+
+    redraw
+
+[33mcommit d07023a2c7ea64d8023b0b1d4216c849ff158538[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Sat Jul 25 23:37:49 2026 +0530
+
+    Auto-commit on save: 2026-07-25 23:37:48
+
+[33mcommit 2791e0441ea38651795939fd44e6868d04357087[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Sat Jul 25 22:16:40 2026 +0530
+
+    Auto-commit on save: 2026-07-25 22:16:35
+
+[33mcommit c1783127790f31e592560c8a22bf9df21e1634bd[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Sat Jul 25 15:55:42 2026 +0530
+
+    revert
+
+[33mcommit 96b859a0c3168fec3c116a7a3a700a1a8176ed66[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Sat Jul 25 15:23:06 2026 +0530
+
+    re
+
+[33mcommit af1782ad30623b51d3dd456c21517c30e4658975[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Sat Jul 25 15:13:48 2026 +0530
+
+    runner config
+
+[33mcommit 7dcbfe72af346545b419aa87348342d4e6cc56f8[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Sat Jul 25 14:27:58 2026 +0530
+
+    new
+
+[33mcommit 72fa74b46133e0deff6920f955ea8f90cc00a840[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Sat Jul 25 13:03:06 2026 +0530
+
+    d3workflow
+
+[33mcommit f7067e0d8b11d749499a2322dbb47da1f0a99470[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Sat Jul 25 12:51:57 2026 +0530
+
+    d3v2
+
+[33mcommit c2d4ed84bb646ca25806f5d07bcf0a75b22888cd[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Sat Jul 25 10:27:40 2026 +0530
+
+    d3
+
+[33mcommit 52f74ffc3f7f747c441e7c6e6f46259cc86fa605[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Fri Jul 24 21:00:03 2026 +0530
+
+    d2-1.1
+
+[33mcommit 9fe26d71e9324a2e5e2c69c6857c419f41a057e3[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Fri Jul 24 20:53:46 2026 +0530
+
+    d2
+
+[33mcommit 384fb35d54c70f42d0986fd5ed877d094fd572ca[m
+Author: Arjun <arjunprasadsa@gmail.com>
+Date:   Thu Jul 23 21:16:52 2026 +0530
+
+    d1
+
+[33mcommit 9f746de54f627c64c552e01905a8a4517eaa96c3[m
+Author: Arjun <192858079+azazil-06@users.noreply.github.com>
+Date:   Thu Jul 23 18:43:32 2026 +0530
+
+    Initial check-in
