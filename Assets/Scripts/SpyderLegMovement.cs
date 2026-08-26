@@ -1,115 +1,129 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+// Attach to each Leg (Leg1-Leg8) under BodyTarget.
+// ikTarget  = the *_IK_Target object  (NOT the effector bone tip)
+// opposingLeg = the leg on the opposite side
+[DefaultExecutionOrder(100)]
 public class LegMover : MonoBehaviour
 {
-    [Header("Scene References (must assign in Inspector)")]
-    public Transform legTarget;      // IK effector for this leg (can be child of body or separate)
-    public LayerMask groundLayer;    // layer your ground colliders use
-    public LegMover opposingLeg;     // drag the OTHER leg's LegMover component here
-    public AudioSource aud;          // auto-filled in Start(), leave empty in Inspector
+    [Header("References")]
+    public Transform ikTarget;
+    public LegMover  opposingLeg;
 
-    [Header("Tuning Values (test defaults)")]
-    public float hoverDist = 1.0f;
-    public float groundCheckDistance = 5f;
-    public float legMoveDist = 0.6f;
-    public float liftDistance = 0.3f;
-    public float legMovementSpeed = 10f;
+    [Header("Step Tuning")]
+    public float stepDistance = 0.5f;
+    public float stepHeight   = 0.3f;
+    public float stepSpeed    = 6f;
 
-    [Header("Runtime State (leave at defaults)")]
-    public int posIndex = 0;
-    public Vector3 targetPoint;
-    public Vector3 halfWayPoint;
-    public bool grounded;
+    [Header("Ground Detection")]
+    public LayerMask groundLayer;
+    public float     groundRayLength = 5f;
 
-    Vector3 desiredPosition;         // world-space ground position the leg should step towards
-    Vector3 lastSteppedBodyPos;      // body position at the time of the last completed step
-    Vector3 lastSteppedLegWorldPos;  // legTarget world position at last step (so we can re-apply it)
+    [Header("Debug (read-only)")]
+    public bool isStepping;
 
-    // Start is called before the first frame update
+    Vector3 _restLocalPos;   // foot rest pos in THIS TRANSFORM's LOCAL space (handles body rotation)
+    Vector3 _footAnchor;     // planted foot world position - locked every frame
+    Vector3 _stepFrom;       // world pos where this step started
+    Vector3 _stepTarget;     // world pos where this step is going
+    float   _t;
+
     void Start()
     {
-        aud = GetComponent<AudioSource>();
-        desiredPosition = transform.position;
-        lastSteppedBodyPos = transform.position;
-        lastSteppedLegWorldPos = legTarget.position;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        CheckGround();
-
-        // If no opposing leg is assigned, treat it as always grounded (allows single-leg testing)
-        bool opposingLegGrounded = (opposingLeg == null) || opposingLeg.grounded;
-
-        // Use how far the BODY has moved since the last step as the trigger.
-        // This works correctly whether legTarget is a child of the body or not.
-        float bodyTravelDist = Vector2.Distance(transform.position, lastSteppedBodyPos);
-
-        if (bodyTravelDist > legMoveDist && posIndex == 0 && opposingLegGrounded)
+        if (ikTarget == null)
         {
-            // Capture legTarget's current world position before we start moving it
-            Vector3 currentLegWorldPos = legTarget.position;
-
-            targetPoint = desiredPosition;
-            halfWayPoint = (targetPoint + currentLegWorldPos) / 2;
-            halfWayPoint.y += liftDistance;
-            posIndex = 1;
-
-            lastSteppedBodyPos = transform.position;
+            Debug.LogError($"[LegMover] {gameObject.name}: ikTarget is not assigned!", this);
+            enabled = false;
+            return;
         }
 
-        else if (posIndex == 1)
+        float dist = Vector3.Distance(transform.position, ikTarget.position);
+        if (dist < 0.5f)
         {
-            legTarget.position = Vector3.Lerp(legTarget.position, halfWayPoint, legMovementSpeed * Time.deltaTime);
-
-            if (Vector2.Distance(legTarget.position, halfWayPoint) <= 0.1f)
-            {
-                posIndex = 2;
-            }
-        }
-
-        else if (posIndex == 2)
-        {
-            legTarget.position = Vector3.Lerp(legTarget.position, targetPoint, legMovementSpeed * Time.deltaTime);
-
-            if (Vector2.Distance(legTarget.position, targetPoint) < 0.1f)
-            {
-                if (aud != null)
-                {
-                    aud.pitch = Random.Range(1.8f, 1.9f);
-                    aud.Play();
-                }
-                posIndex = 0;
-            }
-        }
-
-        if (posIndex == 0)
-        {
-            grounded = true;
+            Debug.LogError(
+                $"[LegMover] {gameObject.name}: ikTarget '{ikTarget.name}' is only {dist:F2} units " +
+                $"from the leg mount - it's probably the wrong object (effector instead of IK Target).\n" +
+                $"  Leg mount world pos: {transform.position}\n" +
+                $"  ikTarget world pos:  {ikTarget.position}\n" +
+                $"  → Open each IK Solver (e.g. Front-B-IK) → CCD Solver 2D → 'Target' field → assign THAT object here.",
+                this);
         }
         else
         {
-            grounded = false;
+            Debug.Log($"[LegMover] {gameObject.name}: ikTarget='{ikTarget.name}' at {ikTarget.position} (dist from mount: {dist:F2}) ✓");
         }
+
+        // Store in LOCAL space so TransformPoint gives the correct world pos
+        // regardless of how the body rotates
+        _restLocalPos = transform.InverseTransformPoint(ikTarget.position);
+
+        _footAnchor = ikTarget.position;
+        _stepFrom   = _footAnchor;
+        _stepTarget = _footAnchor;
     }
 
-    public void CheckGround()
+    void LateUpdate()
     {
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector3.down, groundCheckDistance, groundLayer);
-        if (hit.collider != null)
+        if (!isStepping)
         {
-            Vector3 point = hit.point;
-            point.y += hoverDist;
-            desiredPosition = point;
+            // Keep foot firmly planted - resist parent bone dragging it
+            ikTarget.position = _footAnchor;
+
+            Vector3 desired       = GetRestPosition();
+            bool    otherStepping = opposingLeg != null && opposingLeg.isStepping;
+
+            if (!otherStepping && Vector2.Distance(desired, _footAnchor) > stepDistance)
+            {
+                _stepFrom   = _footAnchor;
+                _stepTarget = desired;
+                _t          = 0f;
+                isStepping  = true;
+            }
         }
         else
         {
-            // No ground hit — fall back to transform.position (body position)
-            desiredPosition = transform.position;
+            _t += Time.deltaTime * stepSpeed;
+            _t  = Mathf.Clamp01(_t);
+
+            Vector3 pos = Vector3.Lerp(_stepFrom, _stepTarget, _t);
+            pos.y      += Mathf.Sin(_t * Mathf.PI) * stepHeight;
+
+            ikTarget.position = pos;
+
+            if (_t >= 1f)
+            {
+                _footAnchor       = _stepTarget;
+                ikTarget.position = _footAnchor;
+                isStepping        = false;
+            }
         }
+    }
+
+    // Ideal foot position = rest offset rotated with the body, snapped to ground
+    Vector3 GetRestPosition()
+    {
+        // TransformPoint converts local→world correctly even when body is rotated/scaled
+        Vector3 worldRest = transform.TransformPoint(_restLocalPos);
+
+        if (groundLayer.value != 0)
+        {
+            RaycastHit2D hit = Physics2D.Raycast(worldRest + Vector3.up * 0.5f,
+                                                 Vector2.down,
+                                                 groundRayLength,
+                                                 groundLayer);
+            if (hit.collider != null)
+                worldRest.y = hit.point.y;
+        }
+
+        return worldRest;
+    }
+
+    void OnDrawGizmos()
+    {
+        if (!Application.isPlaying || ikTarget == null) return;
+        Gizmos.color = isStepping ? Color.yellow : Color.green;
+        Gizmos.DrawWireSphere(_footAnchor, 0.07f);
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(GetRestPosition(), 0.05f);
     }
 }
-
