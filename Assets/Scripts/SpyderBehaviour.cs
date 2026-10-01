@@ -30,6 +30,25 @@ public class SpyderBehaviour : MonoBehaviour
     public float followSmoothing = 0.15f;
     [Tooltip("Minimum gap kept between the spyder and the player.")]
     public float stopDistance    = 1.2f;
+    [Tooltip("Allow the spyder to chase the player's height. Disable for ground-based movement.")]
+    public bool followVerticalMovement = false;
+
+    // ─── Attack ───────────────────────────────────────────────────
+    [Header("Front Leg Attack")]
+    [Tooltip("First front leg bone to animate during the close-range attack.")]
+    public Transform frontLegLeft;
+    [Tooltip("Second front leg bone to animate during the close-range attack.")]
+    public Transform frontLegRight;
+    [Tooltip("Distance at which the spyder starts its front-leg attack.")]
+    public float attackRange = 1.5f;
+    [Tooltip("Time between front-leg attacks.")]
+    public float attackCooldown = 1.25f;
+    [Tooltip("Total time of one front-leg attack animation.")]
+    public float attackDuration = 0.5f;
+    [Tooltip("Local Z rotation applied to the left front leg at the attack peak.")]
+    public float leftLegAttackAngle = -35f;
+    [Tooltip("Local Z rotation applied to the right front leg at the attack peak.")]
+    public float rightLegAttackAngle = 35f;
 
     // ─── Facing / Flip ────────────────────────────────────────────
     [Header("Facing")]
@@ -37,6 +56,8 @@ public class SpyderBehaviour : MonoBehaviour
     public bool flipToFacePlayer = true;
     [Tooltip("Horizontal deadzone (world units) before a flip triggers – prevents jitter when player is nearly dead-ahead.")]
     public float flipThreshold   = 0.1f;
+    [Tooltip("How long the player must remain on the other side before the spyder flips.")]
+    public float flipDelay        = 0.12f;
 
     // ─── Private state ────────────────────────────────────────────
     float   _breathOffset;   // random phase so multiple spyders don't sync perfectly
@@ -44,6 +65,12 @@ public class SpyderBehaviour : MonoBehaviour
     Vector2 _velocity;       // SmoothDamp velocity accumulator
     bool    _facingRight;    // current facing direction
     Vector3 _baseScale;      // original localScale captured at Start
+    float   _facingTimer;
+    float   _breathY;
+    float   _attackCooldownTimer;
+    float   _attackTimer;
+    Quaternion _frontLegLeftRestRotation;
+    Quaternion _frontLegRightRestRotation;
 
     Rigidbody2D _rb;         // optional – used for physics-based movement if present
 
@@ -68,18 +95,79 @@ public class SpyderBehaviour : MonoBehaviour
         // Capture the original scale so we can mirror it cleanly
         _baseScale    = transform.localScale;
         _facingRight  = _baseScale.x >= 0f;
+
+        if (frontLegLeft != null)
+            _frontLegLeftRestRotation = frontLegLeft.localRotation;
+        if (frontLegRight != null)
+            _frontLegRightRestRotation = frontLegRight.localRotation;
     }
 
     // ──────────────────────────────────────────────────────────────
     void Update()
     {
+        // Remove the previous frame's bob before movement so it never accumulates.
+        Vector3 position = transform.position;
+        position.y -= _breathY;
+        transform.position = position;
+
         UpdateFollowState();
 
         if (_isFollowing)
             MoveTowardPlayer();
 
-        // Breathing applied after movement so it layers on top
+        UpdateAttack();
+    }
+
+    // Apply breathing after movement and animation so the bob remains visible.
+    void LateUpdate()
+    {
         ApplyBreathing();
+        ApplyFrontLegAttack();
+    }
+
+    // ─── Front leg attack ─────────────────────────────────────────
+    void UpdateAttack()
+    {
+        if (_attackCooldownTimer > 0f)
+            _attackCooldownTimer -= Time.deltaTime;
+
+        if (_attackTimer > 0f)
+        {
+            _attackTimer -= Time.deltaTime;
+            return;
+        }
+
+        if (player == null || _attackCooldownTimer > 0f) return;
+
+        Vector2 toPlayer = (Vector2)player.position - (Vector2)transform.position;
+        if (!followVerticalMovement)
+            toPlayer.y = 0f;
+
+        if (toPlayer.magnitude <= attackRange)
+        {
+            _attackTimer = Mathf.Max(attackDuration, 0.01f);
+            _attackCooldownTimer = Mathf.Max(attackCooldown, _attackTimer);
+        }
+    }
+
+    void ApplyFrontLegAttack()
+    {
+        if (frontLegLeft == null && frontLegRight == null) return;
+
+        float progress = 1f - (_attackTimer / Mathf.Max(attackDuration, 0.01f));
+        float pose = _attackTimer > 0f ? Mathf.Sin(Mathf.Clamp01(progress) * Mathf.PI) : 0f;
+
+        if (frontLegLeft != null)
+        {
+            frontLegLeft.localRotation = _frontLegLeftRestRotation
+                * Quaternion.Euler(0f, 0f, leftLegAttackAngle * pose);
+        }
+
+        if (frontLegRight != null)
+        {
+            frontLegRight.localRotation = _frontLegRightRestRotation
+                * Quaternion.Euler(0f, 0f, rightLegAttackAngle * pose);
+        }
     }
 
     // ─── Proximity state machine ──────────────────────────────────
@@ -106,13 +194,20 @@ public class SpyderBehaviour : MonoBehaviour
         if (player == null) return;
 
         Vector2 toPlayer = (Vector2)player.position - (Vector2)transform.position;
+        if (!followVerticalMovement)
+            toPlayer.y = 0f;
+
         float   dist     = toPlayer.magnitude;
 
         // Flip body to face the player before moving
         ApplyFacing(toPlayer.x);
 
         // Don't crowd the player – stay at stopDistance
-        if (dist <= stopDistance) return;
+        if (dist <= stopDistance)
+        {
+            _velocity = Vector2.zero;
+            return;
+        }
 
         Vector2 targetPos = (Vector2)transform.position + toPlayer.normalized * (dist - stopDistance);
 
@@ -150,24 +245,30 @@ public class SpyderBehaviour : MonoBehaviour
 
         bool playerIsRight = deltaX > 0f;
 
-        if (playerIsRight != _facingRight)
+        if (playerIsRight == _facingRight)
         {
-            _facingRight = playerIsRight;
-            Vector3 s = _baseScale;
-            s.x = _facingRight ? -Mathf.Abs(s.x) : Mathf.Abs(s.x);
-            transform.localScale = s;
+            _facingTimer = 0f;
+            return;
         }
+
+        _facingTimer += Time.deltaTime;
+        if (_facingTimer < flipDelay) return;
+
+        _facingRight = playerIsRight;
+        _facingTimer = 0f;
+        Vector3 s = _baseScale;
+        s.x = _facingRight ? -Mathf.Abs(s.x) : Mathf.Abs(s.x);
+        transform.localScale = s;
     }
 
     // ─── Breathing bob ────────────────────────────────────────────
     void ApplyBreathing()
     {
-        float breathY = Mathf.Sin((Time.time * breathFrequency * Mathf.PI * 2f) + _breathOffset)
-                        * breathAmplitude;
+        _breathY = Mathf.Sin((Time.time * breathFrequency * Mathf.PI * 2f) + _breathOffset)
+               * breathAmplitude;
 
-        // Add to whatever position movement already set this frame
         Vector3 pos = transform.position;
-        pos.y += breathY;
+        pos.y += _breathY;
         transform.position = pos;
     }
 

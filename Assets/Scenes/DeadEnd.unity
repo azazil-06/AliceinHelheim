@@ -1473,8 +1473,17 @@ MonoBehaviour:
   followSpeed: 3
   followSmoothing: 0.15
   stopDistance: 1.2
+  followVerticalMovement: 0
+  frontLegLeft: {fileID: 1132826847}
+  frontLegRight: {fileID: 347697760}
+  attackRange: 1.5
+  attackCooldown: 1.25
+  attackDuration: 0.5
+  leftLegAttackAngle: -35
+  rightLegAttackAngle: 35
   flipToFacePlayer: 1
   flipThreshold: 0.1
+  flipDelay: 0.12
 --- !u!1 &684849118
 GameObject:
   m_ObjectHideFlags: 0
@@ -2869,7 +2878,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -7792358231388735494, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 48.943
+      value: 35.198
       objectReference: {fileID: 0}
     - target: {fileID: -7552582706839291426, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
       propertyPath: m_LocalScale.x
