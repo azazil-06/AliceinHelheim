@@ -1,53 +1,85 @@
 using UnityEngine;
 
 // Attach to each Leg (Leg1-Leg8) under BodyTarget.
-// ikTarget  = the *_IK_Target object  (NOT the effector bone tip)
-// opposingLeg = the leg on the opposite side
+// ikTarget = the *_IK_Target object (NOT the effector bone tip)
 //
-// FIX: Bones flopped/fell during hops because the IK target was being
-// displaced by the parent hierarchy before LateUpdate could override it.
-// Solution: force ikTarget to world-space anchor FIRST thing every frame,
-// and predict the body's movement to place steps ahead of travel direction.
-[DefaultExecutionOrder(100)]
+// Key improvements:
+// 1. Root velocity prediction: feet step ahead of movement direction so they don't lag behind at high speeds.
+// 2. Alternating tetrapod gait: Group 0 and Group 1 alternate so exactly 4 legs are always grounded.
+// 3. Dynamic scuttle speed: scales up to rapid-fire frequencies during high-speed sprint bursts.
+// 4. Attack override: allows SpyderBehaviour to drive front legs into visceral rearing and stabbing attacks.
+// 5. Airborne / Jump handling: tucks legs naturally beneath the body in mid-air instead of stretching to the floor.
+// 6. Scale-flip recovery: detects when the body turns around and re-anchors feet without criss-crossing.
+// 7. SmoothStep arcing: eliminates harsh linear snapping at step start/end.
+[DefaultExecutionOrder(-10)] // Run BEFORE IKManager2D (order 0) so solvers use current-frame targets
 public class LegMover : MonoBehaviour
 {
     [Header("References")]
     public Transform ikTarget;
+    [Tooltip("Legacy reference kept for inspector compatibility; gaitGroup is now used.")]
     public LegMover opposingLeg;
 
+    [Header("Gait")]
+    [Tooltip("0 = Group A, 1 = Group B. Legs in opposite groups alternate stepping.")]
+    [Range(0, 1)]
+    public int gaitGroup = 0;
+
     [Header("Step Tuning")]
-    public float stepDistance     = 0.5f;
-    public float stepHeight       = 0.3f;
-    public float stepSpeed        = 6f;
-    /// <summary>
-    /// How far ahead of movement direction the step target is placed.
-    /// Increase if feet lag during fast movement. 0 = disabled.
-    /// </summary>
-    public float velocityPrediction = 0.1f;
+    [Tooltip("Horizontal distance from rest before a step triggers.")]
+    public float stepDistance       = 0.35f;
+    [Tooltip("Arc height of the foot while stepping.")]
+    public float stepHeight         = 0.18f;
+    [Tooltip("Base speed multiplier of the step arc. Dynamically accelerates during sprints.")]
+    public float stepSpeed          = 9f;
+    [Tooltip("How far ahead in the direction of movement the foot plants (1.0 = full duration lead).")]
+    public float velocityPrediction = 1f;
+
+    [Header("Airborne / Jump Handling")]
+    [Tooltip("Height clearance above ground before legs tuck into an airborne jump pose.")]
+    public float airborneThreshold  = 0.38f;
+    [Tooltip("Upward tuck offset for the foot relative to its mount while airborne.")]
+    public float airborneTuckHeight = 0.15f;
+    [Tooltip("Read-only: true when the spider is airborne.")]
+    public bool isAirborne;
+
+    [Header("Attack Override")]
+    [Tooltip("Set by SpyderBehaviour during attack so this leg does not lock to ground anchor.")]
+    public bool isAttacking;
 
     [Header("Bone Stiffness")]
-    /// <summary>
-    /// When planted, how fast does the foot snap back to the anchor (0=instant, higher=smoother but springy).
-    /// Keep at 0 for rigid locking; raise slightly if you want a tiny settle spring.
-    /// </summary>
-    public float plantSnapSpeed   = 0f;   // 0 = hard lock (recommended to fix flopping)
+    [Tooltip("Snap speed to anchor while planted (0 = rigid lock).")]
+    public float plantSnapSpeed     = 0f;
 
     [Header("Ground Detection")]
     public LayerMask groundLayer;
-    public float groundRayLength  = 5f;
+    public float groundRayLength    = 5f;
 
     [Header("Debug (read-only)")]
     public bool isStepping;
 
-    Vector3 _restLocalPos;   // foot rest pos in THIS TRANSFORM's LOCAL space
-    Vector3 _footAnchor;     // planted foot world position – locked every frame
-    Vector3 _stepFrom;       // world pos where this step started
-    Vector3 _stepTarget;     // world pos where this step is going
-    float   _t;
+    // Static gait tracking: counts how many legs in each group are currently mid-step
+    private static int s_group0Stepping = 0;
+    private static int s_group1Stepping = 0;
 
-    Rigidbody2D _bodyRB;     // optional – used for velocity prediction
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetGaitCounters()
+    {
+        s_group0Stepping = 0;
+        s_group1Stepping = 0;
+    }
 
-    // ─────────────────────────────────────────────────────────────
+    Vector3 _restLocalPos;     // Foot rest position in this transform's local space
+    Vector3 _footAnchor;       // Planted foot world position
+    Vector3 _stepFrom;         // World position where step started
+    Vector3 _stepTarget;       // World position where step will land
+    float   _t;                // Normalized step time (0..1)
+
+    Vector3 _lastRootPos;
+    Vector3 _smoothedVelocity;
+    float   _lastScaleSign = 1f;
+    bool    _inGaitCount = false;
+    SpyderBehaviour _spyderBehaviour;
+
     void Start()
     {
         if (ikTarget == null)
@@ -57,100 +89,220 @@ public class LegMover : MonoBehaviour
             return;
         }
 
-        float dist = Vector3.Distance(transform.position, ikTarget.position);
-        if (dist < 0.5f)
-        {
-            Debug.LogError(
-                $"[LegMover] {gameObject.name}: ikTarget '{ikTarget.name}' is only {dist:F2} units " +
-                $"from the leg mount – it's probably the wrong object (effector instead of IK Target).\n" +
-                $"  Leg mount world pos: {transform.position}\n" +
-                $"  ikTarget world pos:  {ikTarget.position}\n" +
-                $"  → Open each IK Solver (e.g. Front-B-IK) → CCD Solver 2D → 'Target' field → assign THAT object here.",
-                this);
-        }
-        else
-        {
-            Debug.Log($"[LegMover] {gameObject.name}: ikTarget='{ikTarget.name}' at {ikTarget.position} (dist: {dist:F2}) ✓");
-        }
+        _restLocalPos      = transform.InverseTransformPoint(ikTarget.position);
+        _footAnchor        = ikTarget.position;
+        _stepFrom          = _footAnchor;
+        _stepTarget        = _footAnchor;
+        _lastRootPos       = transform.position;
+        _lastScaleSign     = Mathf.Sign(transform.lossyScale.x);
 
-        _restLocalPos = transform.InverseTransformPoint(ikTarget.position);
-        _footAnchor   = ikTarget.position;
-        _stepFrom     = _footAnchor;
-        _stepTarget   = _footAnchor;
-
-        // Walk up the hierarchy to find the body's Rigidbody2D for velocity prediction
-        _bodyRB = GetComponentInParent<Rigidbody2D>();
+        _spyderBehaviour   = GetComponentInParent<SpyderBehaviour>();
     }
 
-    // ─────────────────────────────────────────────────────────────
+    void OnDisable()
+    {
+        EndStep(false);
+    }
+
     void LateUpdate()
     {
-        if (!isStepping)
+        if (ikTarget == null) return;
+
+        float dt = Time.deltaTime;
+
+        // ── 1. Attack Override ──────────────────────────────────
+        // When SpyderBehaviour is driving this leg in an attack strike, do not override
+        if (isAttacking)
         {
-            // ── PLANTED: hard-lock position every frame ──────────
-            // This is the critical fix: write world position directly so no
-            // parent-transform displacement can make the bone go floppy.
-            if (plantSnapSpeed <= 0f)
+            if (isStepping) EndStep(false);
+            return;
+        }
+
+        // ── 2. Track body velocity ──────────────────────────────
+        Vector3 curPos = transform.position;
+        if (dt > 0.0001f)
+        {
+            Vector3 rawVel = (curPos - _lastRootPos) / dt;
+            _smoothedVelocity = Vector3.Lerp(_smoothedVelocity, rawVel, dt * 20f);
+        }
+        _lastRootPos = curPos;
+
+        // ── 3. Detect scale flip (body turned around) ───────────
+        float currentSign = Mathf.Sign(transform.lossyScale.x);
+        if (_lastScaleSign != 0f && Mathf.Sign(_lastScaleSign) != currentSign)
+        {
+            _lastScaleSign = currentSign;
+            Reanchor();
+            return;
+        }
+        _lastScaleSign = currentSign;
+
+        // ── 4. Check Airborne State (Jumping / In Air) ───────────
+        bool currentlyAirborne = false;
+        if (_spyderBehaviour != null && _spyderBehaviour.isAirborne)
+        {
+            currentlyAirborne = true;
+        }
+        else if (groundLayer.value != 0)
+        {
+            RaycastHit2D hit = Physics2D.Raycast(
+                new Vector2(transform.position.x, transform.position.y + 0.5f),
+                Vector2.down,
+                groundRayLength,
+                groundLayer);
+
+            if (hit.collider != null)
             {
-                ikTarget.position = _footAnchor;                            // hard lock
+                float clearance = transform.position.y - hit.point.y;
+                if (clearance > airborneThreshold)
+                    currentlyAirborne = true;
             }
             else
             {
-                ikTarget.position = Vector3.MoveTowards(
-                    ikTarget.position, _footAnchor,
-                    plantSnapSpeed * Time.deltaTime);                        // soft snap
+                currentlyAirborne = true;
+            }
+        }
+
+        if (currentlyAirborne)
+        {
+            isAirborne = true;
+            if (isStepping)
+            {
+                EndStep(false);
             }
 
-            // ── Check if we need a new step ──────────────────────
-            Vector3 desired     = GetRestPosition();
-            bool otherStepping  = opposingLeg != null && opposingLeg.isStepping;
+            // Smoothly tuck foot upward into a curved jumping pose
+            Vector3 tuckPos = transform.TransformPoint(_restLocalPos);
+            tuckPos.y += airborneTuckHeight;
+            ikTarget.position = Vector3.Lerp(ikTarget.position, tuckPos, dt * 14f);
+            _footAnchor = ikTarget.position;
+            return;
+        }
+        else if (isAirborne)
+        {
+            // Landing touchdown: re-anchor to ground
+            isAirborne = false;
+            Reanchor();
+        }
 
-            if (!otherStepping && Vector3.Distance(desired, _footAnchor) > stepDistance)
+        // ── 5. Step Logic ───────────────────────────────────────
+        if (!isStepping)
+        {
+            // Lock foot anchor
+            if (plantSnapSpeed <= 0f)
+                ikTarget.position = _footAnchor;
+            else
+                ikTarget.position = Vector3.MoveTowards(ikTarget.position, _footAnchor, plantSnapSpeed * dt);
+
+            // Check if step needed
+            Vector3 desired = GetRestPosition();
+            float deltaX = Mathf.Abs(desired.x - _footAnchor.x);
+            float deltaY = Mathf.Abs(desired.y - _footAnchor.y);
+
+            bool needsStep = deltaX > stepDistance || deltaY > stepDistance * 1.5f;
+
+            if (needsStep && CanGroupStep(gaitGroup))
             {
-                _stepFrom   = _footAnchor;
-                _stepTarget = PredictStepTarget(desired);
-                _t          = 0f;
-                isStepping  = true;
+                StartStep(desired);
             }
         }
         else
         {
-            // ── STEPPING: arc the foot to the target ─────────────
-            _t += Time.deltaTime * stepSpeed;
-            _t  = Mathf.Clamp01(_t);
+            // Dynamic speed scaling: scuttle faster during high-speed bursts
+            float speedRatio = Mathf.Clamp01(_smoothedVelocity.magnitude / 7.2f);
+            float currentStepSpeed = Mathf.Lerp(stepSpeed, stepSpeed * 1.8f, speedRatio);
+            float currentStepHeight = Mathf.Lerp(stepHeight, stepHeight * 0.7f, speedRatio);
 
-            Vector3 pos = Vector3.Lerp(_stepFrom, _stepTarget, _t);
-            pos.y += Mathf.Sin(_t * Mathf.PI) * stepHeight;
+            _t += dt * currentStepSpeed;
+            _t = Mathf.Clamp01(_t);
+
+            float smoothT = Mathf.SmoothStep(0f, 1f, _t);
+            Vector3 pos = Vector3.Lerp(_stepFrom, _stepTarget, smoothT);
+            pos.y += Mathf.Sin(smoothT * Mathf.PI) * currentStepHeight;
 
             ikTarget.position = pos;
 
             if (_t >= 1f)
             {
-                _footAnchor       = _stepTarget;
-                ikTarget.position = _footAnchor;
-                isStepping        = false;
+                EndStep(true);
             }
         }
     }
 
-    // ─────────────────────────────────────────────────────────────
-    /// <summary>
-    /// Offsets the step target in the direction of body travel so the foot
-    /// plants ahead of the character rather than behind it.
-    /// </summary>
+    void StartStep(Vector3 baseTarget)
+    {
+        _stepFrom   = _footAnchor;
+        _stepTarget = PredictStepTarget(baseTarget);
+        _t          = 0f;
+        isStepping  = true;
+
+        if (!_inGaitCount)
+        {
+            _inGaitCount = true;
+            if (gaitGroup == 0) s_group0Stepping++;
+            else s_group1Stepping++;
+        }
+    }
+
+    void EndStep(bool updateAnchor)
+    {
+        if (updateAnchor)
+        {
+            _footAnchor = _stepTarget;
+            if (ikTarget != null)
+                ikTarget.position = _footAnchor;
+        }
+
+        isStepping = false;
+
+        if (_inGaitCount)
+        {
+            _inGaitCount = false;
+            if (gaitGroup == 0) s_group0Stepping = Mathf.Max(0, s_group0Stepping - 1);
+            else s_group1Stepping = Mathf.Max(0, s_group1Stepping - 1);
+        }
+    }
+
+    public void Reanchor()
+    {
+        isAttacking = false;
+        EndStep(false);
+        _footAnchor = GetRestPosition();
+        _stepFrom   = _footAnchor;
+        _stepTarget = _footAnchor;
+        if (ikTarget != null)
+            ikTarget.position = _footAnchor;
+    }
+
+    static bool CanGroupStep(int group)
+    {
+        return group == 0 ? (s_group1Stepping == 0) : (s_group0Stepping == 0);
+    }
+
     Vector3 PredictStepTarget(Vector3 baseTarget)
     {
-        if (_bodyRB != null && velocityPrediction > 0f)
+        if (velocityPrediction > 0f)
         {
-            Vector2 vel    = _bodyRB.linearVelocity;
-            baseTarget.x  += vel.x * velocityPrediction;
-            // Keep Y from ground raycast; don't predict Y (avoids airborne misplacement)
+            float speedRatio = Mathf.Clamp01(_smoothedVelocity.magnitude / 7.2f);
+            float currentStepSpeed = Mathf.Lerp(stepSpeed, stepSpeed * 1.8f, speedRatio);
+            float stepDuration = 1f / Mathf.Max(currentStepSpeed, 0.01f);
+            baseTarget.x += _smoothedVelocity.x * stepDuration * velocityPrediction;
+
+            if (groundLayer.value != 0)
+            {
+                RaycastHit2D hit = Physics2D.Raycast(
+                    new Vector2(baseTarget.x, transform.position.y + 0.5f),
+                    Vector2.down,
+                    groundRayLength,
+                    groundLayer);
+
+                if (hit.collider != null)
+                    baseTarget.y = hit.point.y;
+            }
         }
         return baseTarget;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    /// <summary>Ideal foot position = rest offset rotated with body, snapped to ground.</summary>
     Vector3 GetRestPosition()
     {
         Vector3 worldRest = transform.TransformPoint(_restLocalPos);
@@ -158,7 +310,7 @@ public class LegMover : MonoBehaviour
         if (groundLayer.value != 0)
         {
             RaycastHit2D hit = Physics2D.Raycast(
-                worldRest + Vector3.up * 0.5f,
+                new Vector2(worldRest.x, transform.position.y + 0.5f),
                 Vector2.down,
                 groundRayLength,
                 groundLayer);
@@ -170,12 +322,11 @@ public class LegMover : MonoBehaviour
         return worldRest;
     }
 
-    // ─────────────────────────────────────────────────────────────
     void OnDrawGizmos()
     {
         if (!Application.isPlaying || ikTarget == null) return;
 
-        Gizmos.color = isStepping ? Color.yellow : Color.green;
+        Gizmos.color = isAirborne ? Color.magenta : (isAttacking ? Color.red : (isStepping ? Color.yellow : (gaitGroup == 0 ? Color.green : Color.blue)));
         Gizmos.DrawWireSphere(_footAnchor, 0.07f);
 
         Gizmos.color = Color.cyan;
@@ -185,6 +336,7 @@ public class LegMover : MonoBehaviour
         {
             Gizmos.color = Color.magenta;
             Gizmos.DrawWireSphere(_stepTarget, 0.05f);
+            Gizmos.DrawLine(_stepFrom, _stepTarget);
         }
     }
 }

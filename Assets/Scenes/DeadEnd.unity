@@ -457,10 +457,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
   ikTarget: {fileID: 1067160110}
   opposingLeg: {fileID: 980866541}
-  stepDistance: 0.5
-  stepHeight: 0.3
-  stepSpeed: 6
-  velocityPrediction: 0.1
+  gaitGroup: 0
+  stepDistance: 0.35
+  stepHeight: 0.18
+  stepSpeed: 9
+  velocityPrediction: 1
+  airborneThreshold: 0.38
+  airborneTuckHeight: 0.15
+  isAirborne: 0
+  isAttacking: 0
   plantSnapSpeed: 0
   groundLayer:
     serializedVersion: 2
@@ -544,10 +549,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
   ikTarget: {fileID: 1802990969}
   opposingLeg: {fileID: 1285261232}
-  stepDistance: 0.5
-  stepHeight: 0.3
-  stepSpeed: 6
-  velocityPrediction: 0.1
+  gaitGroup: 1
+  stepDistance: 0.35
+  stepHeight: 0.18
+  stepSpeed: 9
+  velocityPrediction: 1
+  airborneThreshold: 0.38
+  airborneTuckHeight: 0.15
+  isAirborne: 0
+  isAttacking: 0
   plantSnapSpeed: 0
   groundLayer:
     serializedVersion: 2
@@ -782,11 +792,10 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 810881705}
   - {fileID: 766245872}
   - {fileID: 959969288}
   - {fileID: 545697615}
-  - {fileID: 1390175979}
-  - {fileID: 1617592111}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -947,7 +956,7 @@ Transform:
   m_GameObject: {fileID: 430781420}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.080017, y: 7.33, z: -8.61}
+  m_LocalPosition: {x: 15.098668, y: 7.33, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1198,7 +1207,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.080847, y: 6.90959, z: -8.61}
+  m_LocalPosition: {x: 15.0994, y: 6.9096, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1466,24 +1475,63 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpyderBehaviour
   player: {fileID: 1862074978}
-  breathAmplitude: 0.002
-  breathFrequency: 0.7
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 16384
+  rideHeight: 1.12
+  groundSnapSpeed: 16
+  groundRayLength: 10
+  gravity: 25
+  maxHealth: 5
+  currentHealth: 5
+  knockbackFriction: 7
+  hurtDuration: 0.45
+  hurtLiftHeight: 0.24
+  hurtTiltAngle: 18
+  hitFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  frontTargetLeft: {fileID: 283479875}
+  frontTargetRight: {fileID: 1346532621}
+  frontMoverLeft: {fileID: 1285261232}
+  frontMoverRight: {fileID: 955156690}
+  attackRange: 1.9
+  attackCooldown: 1.25
+  attackDuration: 0.55
+  attackLiftHeight: 1.35
+  attackReachForward: 0.75
+  attackRearLift: 0.22
+  attackRearTilt: 13
+  attackLungeDistance: 0.4
+  enableSkitterCadence: 1
+  stalkSpeed: 3
+  skitterSpeed: 7.2
+  burstDistance: 4.5
+  burstDuration: {x: 0.45, y: 0.85}
+  pauseDuration: {x: 0.12, y: 0.3}
+  followSmoothing: 0.05
+  stopDistance: 1.3
+  followVerticalMovement: 0
+  canPounce: 1
+  minPounceDistance: 2.4
+  maxPounceDistance: 5
+  pounceCooldown: 3.5
+  pounceArcHeight: 1.3
+  pounceDuration: 0.45
+  pounceTelegraphTime: 0.2
   detectionRadius: 5
   loseRadius: 8
-  followSpeed: 3
-  followSmoothing: 0.15
-  stopDistance: 1.2
-  followVerticalMovement: 0
-  frontLegLeft: {fileID: 1132826847}
-  frontLegRight: {fileID: 347697760}
-  attackRange: 1.5
-  attackCooldown: 1.25
-  attackDuration: 0.5
-  leftLegAttackAngle: -35
-  rightLegAttackAngle: 35
+  sprintCrouch: 0.06
+  forwardLeanAngle: 3.5
+  aimPitchAngle: 14
+  twitchIntensity: 1.8
+  twitchInterval: 0.25
+  breathAmplitude: 0.03
+  breathFrequency: 0.7
   flipToFacePlayer: 1
-  flipThreshold: 0.1
-  flipDelay: 0.12
+  positiveScaleFacesRight: 0
+  flipThreshold: 0.75
+  flipDelay: 0.18
+  overheadHeightThreshold: 0.7
+  overheadWidthThreshold: 2.2
 --- !u!1 &684849118
 GameObject:
   m_ObjectHideFlags: 0
@@ -1749,6 +1797,105 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5554665689531842209, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
   m_PrefabInstance: {fileID: 1163120163}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &810881704
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 810881705}
+  - component: {fileID: 810881708}
+  - component: {fileID: 810881707}
+  - component: {fileID: 810881706}
+  m_Layer: 0
+  m_Name: PlayerVignette
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &810881705
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810881704}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 328632071}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &810881706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810881704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b22ec77edb51c54fa098e20ef6303ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerVignette
+  target: {fileID: 1862074978}
+  worldOffset: {x: 0, y: 0.6, z: 0}
+  innerRadius: 0.264
+  outerRadius: 0.56
+  maxDarkness: 0.719
+  fadeCurve: 0.5
+  vignetteColor: {r: 0, g: 0, b: 0, a: 1}
+  enablePulse: 1
+  pulseAmplitude: 0.015
+  pulseSpeed: 0.5
+  vignetteShader: {fileID: 4800000, guid: fc91ca480558b5e4badfdd66de86987d, type: 3}
+--- !u!114 &810881707
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810881704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &810881708
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810881704}
+  m_CullTransparentMesh: 1
 --- !u!1 &845072078
 GameObject:
   m_ObjectHideFlags: 0
@@ -2003,10 +2150,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
   ikTarget: {fileID: 1752961362}
   opposingLeg: {fileID: 955156690}
-  stepDistance: 0.5
-  stepHeight: 0.3
-  stepSpeed: 6
-  velocityPrediction: 0.1
+  gaitGroup: 0
+  stepDistance: 0.35
+  stepHeight: 0.18
+  stepSpeed: 9
+  velocityPrediction: 1
+  airborneThreshold: 0.38
+  airborneTuckHeight: 0.15
+  isAirborne: 0
+  isAttacking: 0
   plantSnapSpeed: 0
   groundLayer:
     serializedVersion: 2
@@ -2059,10 +2211,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
   ikTarget: {fileID: 1346532621}
   opposingLeg: {fileID: 872906431}
-  stepDistance: 0.3
-  stepHeight: 0.5
-  stepSpeed: 2
-  velocityPrediction: 0.1
+  gaitGroup: 0
+  stepDistance: 0.35
+  stepHeight: 0.18
+  stepSpeed: 9
+  velocityPrediction: 1
+  airborneThreshold: 0.38
+  airborneTuckHeight: 0.15
+  isAirborne: 0
+  isAttacking: 0
   plantSnapSpeed: 0
   groundLayer:
     serializedVersion: 2
@@ -2204,10 +2361,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
   ikTarget: {fileID: 1307708217}
   opposingLeg: {fileID: 218595161}
-  stepDistance: 0.5
-  stepHeight: 0.5
-  stepSpeed: 3
-  velocityPrediction: 0.1
+  gaitGroup: 0
+  stepDistance: 0.35
+  stepHeight: 0.18
+  stepSpeed: 9
+  velocityPrediction: 1
+  airborneThreshold: 0.38
+  airborneTuckHeight: 0.15
+  isAirborne: 0
+  isAttacking: 0
   plantSnapSpeed: 0
   groundLayer:
     serializedVersion: 2
@@ -2260,10 +2422,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
   ikTarget: {fileID: 223626115}
   opposingLeg: {fileID: 1323813287}
-  stepDistance: 0.5
-  stepHeight: 0.5
-  stepSpeed: 3
-  velocityPrediction: 0.1
+  gaitGroup: 1
+  stepDistance: 0.35
+  stepHeight: 0.18
+  stepSpeed: 9
+  velocityPrediction: 1
+  airborneThreshold: 0.38
+  airborneTuckHeight: 0.15
+  isAirborne: 0
+  isAttacking: 0
   plantSnapSpeed: 0
   groundLayer:
     serializedVersion: 2
@@ -3631,10 +3798,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
   ikTarget: {fileID: 283479875}
   opposingLeg: {fileID: 265106392}
-  stepDistance: 0.3
-  stepHeight: 0.5
-  stepSpeed: 2
-  velocityPrediction: 0.1
+  gaitGroup: 1
+  stepDistance: 0.35
+  stepHeight: 0.18
+  stepSpeed: 9
+  velocityPrediction: 1
+  airborneThreshold: 0.38
+  airborneTuckHeight: 0.15
+  isAirborne: 0
+  isAttacking: 0
   plantSnapSpeed: 0
   groundLayer:
     serializedVersion: 2
@@ -3682,7 +3854,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1323813286}
   - component: {fileID: 1323813287}
-  - component: {fileID: 1323813288}
   m_Layer: 0
   m_Name: Leg6
   m_TagString: Untagged
@@ -3719,38 +3890,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpyderLegMovement
   ikTarget: {fileID: 684849119}
   opposingLeg: {fileID: 985134049}
-  stepDistance: 0.5
-  stepHeight: 0.3
-  stepSpeed: 6
-  velocityPrediction: 0.1
+  gaitGroup: 1
+  stepDistance: 0.35
+  stepHeight: 0.18
+  stepSpeed: 9
+  velocityPrediction: 1
+  airborneThreshold: 0.38
+  airborneTuckHeight: 0.15
+  isAirborne: 0
+  isAttacking: 0
   plantSnapSpeed: 0
   groundLayer:
     serializedVersion: 2
     m_Bits: 16384
-  groundRayLength: 5
-  isStepping: 0
---- !u!114 &1323813288
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1323813285}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0c5f8edd953395f4a996d57e7efc21f6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LegMover
-  ikTarget: {fileID: 0}
-  opposingLeg: {fileID: 0}
-  stepDistance: 0.5
-  stepHeight: 0.3
-  stepSpeed: 6
-  velocityPrediction: 0.1
-  plantSnapSpeed: 0
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 0
   groundRayLength: 5
   isStepping: 0
 --- !u!1 &1346532620
@@ -3784,81 +3936,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 49318227}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1390175978
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1390175979}
-  - component: {fileID: 1390175982}
-  - component: {fileID: 1390175981}
-  m_Layer: 5
-  m_Name: vignette
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1390175979
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1390175978}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 8.63, y: 4.61, z: 0.10000001}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 328632071}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 3, y: -214}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1390175981
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1390175978}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.9547169, g: 0.14230676, b: 0.6006553, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 81f9f1260c4b76d4986f4be6794976b6, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &1390175982
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1390175978}
-  m_CullTransparentMesh: 1
 --- !u!1 &1393144415
 GameObject:
   m_ObjectHideFlags: 0
@@ -9144,81 +9221,6 @@ EdgeCollider2D:
   m_AdjacentEndPoint: {x: 0, y: 0}
   m_UseAdjacentStartPoint: 0
   m_UseAdjacentEndPoint: 0
---- !u!1 &1617592110
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1617592111}
-  - component: {fileID: 1617592113}
-  - component: {fileID: 1617592112}
-  m_Layer: 5
-  m_Name: vignette (1)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1617592111
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1617592110}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 8.52, y: 5.25, z: 0.10000001}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 328632071}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -201.97987}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1617592112
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1617592110}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.9547169, g: 0.14230676, b: 0.6006553, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 168490243b1732548a72277a115f78b7, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &1617592113
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1617592110}
-  m_CullTransparentMesh: 1
 --- !u!1 &1627774343
 GameObject:
   m_ObjectHideFlags: 0
@@ -9860,6 +9862,9 @@ MonoBehaviour:
   lowJumpMultiplier: 6
   attackLungeForce: 24
   lungeFriction: 2
+  attackRange: 2.4
+  attackKnockback: 6.5
+  hitImpactDelay: 0.16
   fallThreshold: 5
   moveInput: {x: 0, y: 0}
 --- !u!70 &1862074975
