@@ -1,45 +1,70 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
     // Body declarations
     private InputSystem_Actions control;
-    Rigidbody2D playerRB;
-    Animator playerAnimate;
-    
+    private Rigidbody2D playerRB;
+    private Collider2D playerCollider;
+    private Animator playerAnimate;
+
     //------------------------------------------------------------
-    // editable var
+    // Editable vars - Movement & Jump
+    [Header("Locomotion")]
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float jumpMultiplier = 6f;
     [SerializeField] private float lowJumpMultiplier = 2.5f;
 
-    [Header("Attack Movement")]
+    [Header("3D Visual & 2.5D Orientation")]
+    [Tooltip("Child transform that holds the 3D character model. If empty, automatically looks for a child named 'Visual' or with an Animator.")]
+    [SerializeField] private Transform visualRoot;
+    [Tooltip("Interpolation speed for turning yaw between left and right.")]
+    [SerializeField] private float turnSpeed = 16f;
+    [Tooltip("Slight yaw tilt toward the camera (in degrees) to give 2.5D depth and show the 3D model face/torso instead of a flat profile.")]
+    [Range(0f, 45f)]
+    [SerializeField] private float cameraFacingTilt = 15f;
+    [Tooltip("Instant flip or smooth rotation interpolation.")]
+    [SerializeField] private bool smoothTurning = true;
+
+    [Header("Ground Check (2.5D Physics)")]
+    [Tooltip("LayerMask of the ground/terrain (Layer 14 'base').")]
+    [SerializeField] private LayerMask groundLayer = 1 << 14;
+    [Tooltip("Downward distance to check for ground beneath the player collider.")]
+    [SerializeField] private float groundCheckDistance = 0.15f;
+    [Tooltip("Radius of the circle cast for ground detection.")]
+    [SerializeField] private float groundCheckRadius = 0.2f;
+    [Tooltip("Offset from bottom of collider for raycast origin.")]
+    [SerializeField] private float groundCheckOffset = 0.05f;
+
+    [Header("Attack Movement & Combat")]
     [SerializeField] private float attackLungeForce = 15f;
     [SerializeField] private float lungeFriction = 5f;
-
-    [Header("Combat Hit Detection")]
-    [Tooltip("How far the sledgehammer can reach to hit enemies.")]
+    [Tooltip("How far the attack can reach to hit enemies.")]
     [SerializeField] private float attackRange = 2.4f;
     [Tooltip("Knockback force applied to enemies upon impact.")]
     [SerializeField] private float attackKnockback = 6.5f;
-    [Tooltip("Delay in seconds from pressing attack until the hammer slams down.")]
+    [Tooltip("Delay in seconds from pressing attack until the impact occurs.")]
     [SerializeField] private float hitImpactDelay = 0.16f;
+    [Tooltip("Optional weapon attachment point in the 3D rig's hand.")]
+    [SerializeField] private Transform weaponSocket;
 
-    [Header("Falling")]
-    [SerializeField] private float fallThreshold = 5f;
+    [Header("Falling & Air State")]
+    [SerializeField] private float fallThreshold = -0.5f;
 
     //----------------------------------------------------------------------------------
-    // hardcoded var
+    // State vars
     public Vector2 moveInput;
-    bool isGrounded = true;
-    bool isMoving;
-    bool isFalling = false;
-
-    bool isAttacking = false;
-
-    bool isJumpPressed = false;
-    //------------------------------------------------------------------------------ 
+    public bool isGrounded = true;
+    public bool isMoving;
+    public bool isFalling = false;
+    public bool isAttacking = false;
+    private bool isJumpPressed = false;
     private float facing = 1f; // 1 = Right, 0 = Left
+    private float targetYaw = 75f;
+
+    // Cached Animator Parameter Hashes for safe setting across 2D & 3D controllers
+    private readonly HashSet<string> _animParams = new HashSet<string>();
 
     //------------------------------------------------------------------------------ 
     void Awake()
@@ -60,39 +85,82 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         playerRB = GetComponent<Rigidbody2D>();
-        playerAnimate = GetComponent<Animator>();
+        playerCollider = GetComponent<Collider2D>();
+
+        // Auto-detect 3D visualRoot if not explicitly assigned
+        if (visualRoot == null)
+        {
+            Transform foundVisual = transform.Find("Visual");
+            if (foundVisual != null)
+            {
+                visualRoot = foundVisual;
+            }
+            else
+            {
+                // Search for any child holding an Animator (excluding this root)
+                var animators = GetComponentsInChildren<Animator>();
+                foreach (var a in animators)
+                {
+                    if (a.gameObject != this.gameObject)
+                    {
+                        visualRoot = a.transform;
+                        playerAnimate = a;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Locate Animator on visualRoot or fall back to root
+        if (playerAnimate == null && visualRoot != null)
+        {
+            playerAnimate = visualRoot.GetComponentInChildren<Animator>();
+        }
+        if (playerAnimate == null)
+        {
+            playerAnimate = GetComponent<Animator>();
+        }
+
+        CacheAnimatorParameters();
+        UpdateTargetRotation(true);
+    }
+
+    /// <summary>
+    /// Inspects and caches all available parameter names on the active Animator
+    /// to prevent runtime warnings when toggling between 2D and 3D controllers.
+    /// </summary>
+    public void CacheAnimatorParameters()
+    {
+        _animParams.Clear();
+        if (playerAnimate != null && playerAnimate.runtimeAnimatorController != null)
+        {
+            foreach (var p in playerAnimate.parameters)
+            {
+                _animParams.Add(p.name);
+            }
+        }
     }
 
     void Update()
     {
         // 1. Read Input
-        moveInput = new Vector2(control.Player.Move.ReadValue<Vector2>().x, 0f); // ignore y input
+        moveInput = new Vector2(control.Player.Move.ReadValue<Vector2>().x, 0f);
         isJumpPressed = control.Player.Jump.IsPressed();
-
-        // Ground check
-        if (transform.position.y > 4f)
-        {
-            isGrounded = false;
-        }
-        else
-        {
-            isGrounded = true;
-        }
-
-        playerAnimate.SetBool("isGrounded", isGrounded);
-
-        // 2. Uniform Deadzone for both directions
         isMoving = Mathf.Abs(moveInput.x) > 0.1f;
 
-        // Jump & Movement Logic
-        checkJump();
-        checkRunAndIdle();
-        checkAttack();
+        // 2. Perform 2.5D Ground Check
+        CheckGround();
 
-        // Animation Logic
-        playerAnimate.SetFloat("Motion", moveInput.x);
-        playerAnimate.SetFloat("Facing", facing);
-        playerAnimate.SetBool("isRunning", isMoving);
+        // 3. Movement, Jump & Combat Logic
+        CheckRunAndIdle();
+        CheckJump();
+        CheckAttack();
+
+        // 4. Update 3D Visual Yaw Rotation
+        UpdateVisualRotation();
+
+        // 5. Send Animation Parameters (supports both 2D sprite & 3D humanoid rigs)
+        UpdateAnimator();
     }
 
     void FixedUpdate()
@@ -104,12 +172,13 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Apply extra gravity while moving up and spacebar is released
+        // Apply extra gravity while moving up and jump button is released (variable jump height)
         if (playerRB.linearVelocity.y > 0f && !isJumpPressed)
         {
             playerRB.linearVelocity += Vector2.up * Physics2D.gravity.y * playerRB.gravityScale * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
         }
 
+        // Horizontal velocity
         if (isGrounded)
         {
             playerRB.linearVelocity = new Vector2(moveInput.x * moveSpeed, playerRB.linearVelocity.y);
@@ -117,24 +186,87 @@ public class PlayerController : MonoBehaviour
     }
 
     //----------------------------------------------------------------------
-    // Character motions
+    // Ground & Falling Detection
 
-    void checkRunAndIdle()
+    void CheckGround()
     {
-        if (isGrounded && isMoving)
+        Vector2 checkOrigin;
+        float radius = groundCheckRadius;
+
+        if (playerCollider != null)
         {
-            if (moveInput.x > 0.1f)
+            Bounds b = playerCollider.bounds;
+            checkOrigin = new Vector2(b.center.x, b.min.y + groundCheckOffset);
+            radius = Mathf.Min(groundCheckRadius, b.extents.x * 0.9f);
+        }
+        else
+        {
+            checkOrigin = (Vector2)transform.position + Vector2.up * groundCheckOffset;
+        }
+
+        RaycastHit2D hit = Physics2D.CircleCast(checkOrigin, radius, Vector2.down, groundCheckDistance, groundLayer);
+        isGrounded = (hit.collider != null);
+
+        // Falling state
+        isFalling = (!isGrounded && playerRB != null && playerRB.linearVelocity.y < fallThreshold);
+    }
+
+    //----------------------------------------------------------------------
+    // Character Motions & 2.5D Orientation
+
+    void CheckRunAndIdle()
+    {
+        if (isMoving)
+        {
+            if (moveInput.x > 0.1f && facing != 1f)
             {
                 facing = 1f; // Moving Right
+                UpdateTargetRotation(false);
             }
-            else if (moveInput.x < -0.1f)
+            else if (moveInput.x < -0.1f && facing != 0f)
             {
                 facing = 0f; // Moving Left
+                UpdateTargetRotation(false);
             }
         }
     }
 
-    void checkJump()
+    void UpdateTargetRotation(bool instant)
+    {
+        // 2.5D Camera Angle:
+        // When facing right (+X): rotate to 90 degrees yaw, tilted slightly towards camera (+Z)
+        // When facing left (-X): rotate to 270 degrees yaw (-90), tilted slightly towards camera (+Z)
+        if (facing == 1f)
+        {
+            targetYaw = 90f - cameraFacingTilt;
+        }
+        else
+        {
+            targetYaw = 270f + cameraFacingTilt;
+        }
+
+        if (instant && visualRoot != null)
+        {
+            visualRoot.localRotation = Quaternion.Euler(0f, targetYaw, 0f);
+        }
+    }
+
+    void UpdateVisualRotation()
+    {
+        if (visualRoot == null) return;
+
+        Quaternion targetRot = Quaternion.Euler(0f, targetYaw, 0f);
+        if (smoothTurning && turnSpeed > 0f)
+        {
+            visualRoot.localRotation = Quaternion.Slerp(visualRoot.localRotation, targetRot, turnSpeed * Time.deltaTime);
+        }
+        else
+        {
+            visualRoot.localRotation = targetRot;
+        }
+    }
+
+    void CheckJump()
     {
         if (isAttacking) return;
 
@@ -142,30 +274,33 @@ public class PlayerController : MonoBehaviour
         {
             playerRB.linearVelocity = new Vector2(playerRB.linearVelocity.x, 0f);
             playerRB.AddForce(Vector2.up * jumpMultiplier, ForceMode2D.Impulse);
-            playerAnimate.SetTrigger("isJumping");
+
+            SafeSetTrigger("isJumping");
+            SafeSetTrigger("Jump");
         }
     }
 
-    void checkAttack()
+    void CheckAttack()
     {
         if (isAttacking) return;
 
         if (control.Player.Attack.triggered)
         {
-            playerAnimate.SetTrigger("Attack");
+            SafeSetTrigger("Attack");
 
-            // 1. Stop current movement immediately to prep for impulse
+            // Stop current horizontal movement to prep for lunge impulse
             playerRB.linearVelocity = new Vector2(0f, playerRB.linearVelocity.y);
 
-            // 2. Determine attack facing direction
+            // Determine attack facing direction
             float attackDirX = facing == 1f ? 1f : -1f;
             if (Mathf.Abs(moveInput.x) > 0.1f)
             {
                 attackDirX = Mathf.Sign(moveInput.x);
+                facing = attackDirX > 0f ? 1f : 0f;
+                UpdateTargetRotation(true); // Snap orientation towards strike direction
                 playerRB.AddForce(new Vector2(attackDirX * attackLungeForce, 0f), ForceMode2D.Impulse);
             }
 
-            // 3. Trigger hit detection coroutine aligned with hammer swing impact
             StartCoroutine(PerformAttackHitCheck(attackDirX));
         }
     }
@@ -194,6 +329,51 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    //----------------------------------------------------------------------
+    // Animation Bridge (Dual 2D & 3D controller compatibility)
+
+    void UpdateAnimator()
+    {
+        if (playerAnimate == null) return;
+
+        float speedValue = Mathf.Abs(moveInput.x);
+
+        // Standard 3D Humanoid Animator parameters
+        SafeSetFloat("Speed", speedValue);
+        SafeSetFloat("MoveSpeed", speedValue);
+        SafeSetBool("IsGrounded", isGrounded);
+        SafeSetBool("IsMoving", isMoving);
+        SafeSetBool("IsFalling", isFalling);
+
+        // Legacy 2D Sprite Animator parameters
+        SafeSetFloat("Motion", moveInput.x);
+        SafeSetFloat("Facing", facing);
+        SafeSetBool("isRunning", isMoving);
+        SafeSetBool("isGrounded", isGrounded);
+        SafeSetBool("falling", isFalling);
+    }
+
+    private void SafeSetFloat(string paramName, float value)
+    {
+        if (_animParams.Contains(paramName))
+            playerAnimate.SetFloat(paramName, value);
+    }
+
+    private void SafeSetBool(string paramName, bool value)
+    {
+        if (_animParams.Contains(paramName))
+            playerAnimate.SetBool(paramName, value);
+    }
+
+    private void SafeSetTrigger(string paramName)
+    {
+        if (_animParams.Contains(paramName))
+            playerAnimate.SetTrigger(paramName);
+    }
+
+    //----------------------------------------------------------------------
+    // Public Animation Event Callbacks
+
     public void LockMovement()
     {
         isAttacking = true;
@@ -204,12 +384,47 @@ public class PlayerController : MonoBehaviour
         isAttacking = false;
     }
 
+    public void SetVisualRoot(Transform visual)
+    {
+        visualRoot = visual;
+        if (visualRoot != null)
+        {
+            playerAnimate = visualRoot.GetComponentInChildren<Animator>();
+        }
+        CacheAnimatorParameters();
+        UpdateTargetRotation(true);
+    }
+
+    //----------------------------------------------------------------------
+    // Gizmos
+
     void OnDrawGizmosSelected()
     {
+        // 1. Attack Range Gizmo
         Gizmos.color = Color.magenta;
         Vector3 origin = transform.position;
         Vector3 dir = (facing == 1f ? Vector3.right : Vector3.left) * attackRange;
         Gizmos.DrawRay(origin, dir);
         Gizmos.DrawWireSphere(origin + dir * 0.5f, attackRange * 0.5f);
+
+        // 2. Ground Check Gizmo
+        Gizmos.color = isGrounded ? Color.green : Color.red;
+        Vector2 checkOrigin;
+        float radius = groundCheckRadius;
+
+        if (playerCollider != null)
+        {
+            Bounds b = playerCollider.bounds;
+            checkOrigin = new Vector2(b.center.x, b.min.y + groundCheckOffset);
+            radius = Mathf.Min(groundCheckRadius, b.extents.x * 0.9f);
+        }
+        else
+        {
+            checkOrigin = (Vector2)transform.position + Vector2.up * groundCheckOffset;
+        }
+
+        Gizmos.DrawWireSphere(checkOrigin, radius);
+        Gizmos.DrawWireSphere(checkOrigin + Vector2.down * groundCheckDistance, radius);
+        Gizmos.DrawLine(checkOrigin, checkOrigin + Vector2.down * groundCheckDistance);
     }
 }
