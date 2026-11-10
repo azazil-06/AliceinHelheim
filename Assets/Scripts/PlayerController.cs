@@ -7,7 +7,10 @@ public class PlayerController : MonoBehaviour
     private InputSystem_Actions control;
     private Rigidbody2D playerRB;
     private Collider2D playerCollider;
-    private Animator playerAnimate;
+
+    [Header("Active Animator")]
+    [Tooltip("Active Animator driving the character. Automatically resolves to the 3D Character Animator or 2D sprite Animator.")]
+    [SerializeField] private Animator playerAnimate;
 
     //------------------------------------------------------------
     // Editable vars - Movement & Jump
@@ -54,8 +57,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float hitImpactDelay = 0.16f;
     [Tooltip("Optional weapon attachment point in the 3D rig's hand.")]
     [SerializeField] private Transform weaponSocket;
-    [Tooltip("Optional reference to procedural ponytail soft-body physics.")]
-    [SerializeField] private SoftBodyPonytail ponytailPhysics;
 
     [Header("Falling & Air State")]
     [SerializeField] private float fallThreshold = -0.5f;
@@ -84,6 +85,8 @@ public class PlayerController : MonoBehaviour
         control = new InputSystem_Actions();
         // Enforce upright identity rotation on Player root for strict 2D physics plane
         transform.rotation = Quaternion.identity;
+
+        ResolveActiveAnimator();
     }
 
     void OnEnable()
@@ -102,47 +105,42 @@ public class PlayerController : MonoBehaviour
         playerRB = GetComponent<Rigidbody2D>();
         playerCollider = GetComponent<Collider2D>();
 
-        // Auto-detect 3D visualRoot if not explicitly assigned
+        ResolveActiveAnimator();
+        UpdateTargetRotation(true);
+    }
+
+    public void ResolveActiveAnimator()
+    {
         if (visualRoot == null)
         {
-            Transform foundVisual = transform.Find("Visual");
-            if (foundVisual != null)
+            visualRoot = transform.Find("Visual");
+        }
+
+        if (visualRoot != null && visualRoot.gameObject.activeSelf)
+        {
+            var anim = visualRoot.GetComponentInChildren<Animator>();
+            if (anim != null)
             {
-                visualRoot = foundVisual;
-            }
-            else
-            {
-                // Search for any child holding an Animator (excluding this root)
-                var animators = GetComponentsInChildren<Animator>();
-                foreach (var a in animators)
-                {
-                    if (a.gameObject != this.gameObject)
-                    {
-                        visualRoot = a.transform;
-                        playerAnimate = a;
-                        break;
-                    }
-                }
+                playerAnimate = anim;
             }
         }
 
-        // Locate Animator on visualRoot or fall back to root
-        if (playerAnimate == null && visualRoot != null)
-        {
-            playerAnimate = visualRoot.GetComponentInChildren<Animator>();
-        }
         if (playerAnimate == null)
         {
             playerAnimate = GetComponent<Animator>();
         }
 
-        CacheAnimatorParameters();
-        UpdateTargetRotation(true);
-
-        if (ponytailPhysics == null)
+        if (playerAnimate != null)
         {
-            ponytailPhysics = GetComponentInChildren<SoftBodyPonytail>();
+            playerAnimate.cullingMode = AnimatorCullingMode.AlwaysAnimate;
         }
+
+        foreach (var smr in GetComponentsInChildren<SkinnedMeshRenderer>())
+        {
+            smr.updateWhenOffscreen = true;
+        }
+
+        CacheAnimatorParameters();
     }
 
     /// <summary>
@@ -314,16 +312,9 @@ public class PlayerController : MonoBehaviour
             playerRB.linearVelocity = new Vector2(playerRB.linearVelocity.x, 0f);
             playerRB.AddForce(Vector2.up * jumpMultiplier, ForceMode2D.Impulse);
 
-            bool isRunningJump = isMoving;
-            SafeSetBool("IsRunningJump", isRunningJump);
             SafeSetTrigger("JumpTrigger");
             SafeSetTrigger("isJumping");
             SafeSetTrigger("Jump");
-
-            if (ponytailPhysics != null)
-            {
-                ponytailPhysics.AddImpulse(new Vector3(0f, -4f, 0f));
-            }
         }
     }
 
@@ -401,13 +392,6 @@ public class PlayerController : MonoBehaviour
             // Apply lunge impulse in strike direction
             playerRB.AddForce(new Vector2(attackDirX * lunge, 0f), ForceMode2D.Impulse);
 
-            // Hair whip impulse
-            if (ponytailPhysics != null)
-            {
-                float hairWhip = isMoving ? 8f : (currentComboIndex == 2 ? 6f : 3.5f);
-                ponytailPhysics.AddImpulse(new Vector3(-attackDirX * hairWhip, 1.8f, 0f));
-            }
-
             // Trigger animation
             SafeSetInteger("AttackIndex", currentComboIndex);
             SafeSetTrigger("AttackTrigger");
@@ -474,24 +458,32 @@ public class PlayerController : MonoBehaviour
 
     private void SafeSetFloat(string paramName, float value)
     {
+        if (playerAnimate == null) return;
+        if (_animParams.Count == 0) CacheAnimatorParameters();
         if (_animParams.Contains(paramName))
             playerAnimate.SetFloat(paramName, value);
     }
 
     private void SafeSetBool(string paramName, bool value)
     {
+        if (playerAnimate == null) return;
+        if (_animParams.Count == 0) CacheAnimatorParameters();
         if (_animParams.Contains(paramName))
             playerAnimate.SetBool(paramName, value);
     }
 
     private void SafeSetInteger(string paramName, int value)
     {
+        if (playerAnimate == null) return;
+        if (_animParams.Count == 0) CacheAnimatorParameters();
         if (_animParams.Contains(paramName))
             playerAnimate.SetInteger(paramName, value);
     }
 
     private void SafeSetTrigger(string paramName)
     {
+        if (playerAnimate == null) return;
+        if (_animParams.Count == 0) CacheAnimatorParameters();
         if (_animParams.Contains(paramName))
             playerAnimate.SetTrigger(paramName);
     }
@@ -515,11 +507,6 @@ public class PlayerController : MonoBehaviour
         if (visualRoot != null)
         {
             playerAnimate = visualRoot.GetComponentInChildren<Animator>();
-            ponytailPhysics = visualRoot.GetComponentInChildren<SoftBodyPonytail>();
-        }
-        else
-        {
-            ponytailPhysics = null;
         }
         CacheAnimatorParameters();
         UpdateTargetRotation(true);

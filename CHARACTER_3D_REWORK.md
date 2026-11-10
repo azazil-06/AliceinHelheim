@@ -51,29 +51,23 @@ Instead of rewriting the entire game physics to full 3D, the project utilizes a 
 
 ### 1. 3-Hit Stationary Combo (Press `X` or Left Mouse Button)
 When stationary (`Speed < 0.1`):
-* **Hit 1:** `Boxing 1` — Fast left punch, `boxingLunge = 6f`, 0.9f reach.
-* **Hit 2:** `Boxing 2` — Chained right cross if `X` is pressed within `comboWindow = 0.9s`.
-* **Hit 3:** `Kick` — Powerful finishing roundhouse/kick, `kickLunge = 12f`, 1.1x reach, increased knockback.
+* **Hit 1:** `Boxing 1` (`Boxing_1_InPlace.anim`) — Fast left punch, `boxingLunge = 6f`, 0.9f reach.
+* **Hit 2:** `Boxing 2` (`Boxing_2_InPlace.anim`) — Chained right cross if `X` is pressed within `comboWindow = 0.9s`.
+* **Hit 3:** `Kick` (`Kick_InPlace.anim`) — Powerful finishing roundhouse/kick, `kickLunge = 12f`, 1.1x reach, increased knockback.
 * Resets to `Boxing 1` after the finisher or if the combo window expires.
 
 ### 2. Running Kick (Press `X` while running)
-* When moving (`Speed > 0.1` / `isMoving = true`), pressing `X` executes **`Run to kick`** (Combo Index 3).
+* When moving (`Speed > 0.1` / `isMoving = true`), pressing `X` executes **`Run to kick`** (`Run_to_kick_InPlace.anim`, Combo Index 3).
 * Applies an aggressive lunge impulse (`runningKickLunge = 18f`), delivering long-range gap-closing strikes against enemies.
 
 ### 3. Dynamic Fighting Idle Stance
-* After executing any attack (boxing combo or running kick), the character enters **`Fighting Idle`**.
+* After executing any attack (boxing combo or running kick), the character enters **`Fighting Idle`** (`Fighting_Idle_InPlace.anim`).
 * The character maintains an alert combat posture for **3.0 seconds** (`combatIdleDuration = 3.0f`).
 * If no further attacks occur within this duration, the character smoothly eases back into standard **`Idle`**.
 * **Zero Delay Interrupt:** If movement or jumping input is received during `Fighting Idle`, the character transitions immediately to `Run` or `Jump` without waiting for the animation or timer to finish.
 
-### 4. Idle Cycling (`Idle` <-> `Idle Look Around`)
-* When resting in normal `Idle`, the animation cycles naturally into **`Idle Look Around`** at the completion of an idle loop (`exitTime = 1.0f`).
-* At the end of `Idle Look Around`, it smoothly loops back to `Idle`.
-* **Immediate Responsiveness:** Any movement, jump, or attack input instantly cancels the looking-around animation and enters the requested state with zero lag.
-
-### 5. Dual Jump Mechanics (Press `Spacebar`)
-* **Stationary Jump:** Pressing Space while still triggers **`Jumping`** (clip: `Assets/Animation/Jumping.fbx`), playing a vertical airborne leap.
-* **Running Jump:** Pressing Space while moving triggers **`Running Jump`** (clip: `Assets/Animation/Running Jump.fbx`), playing an athletic forward leap.
+### 4. Jump Mechanics (Press `Spacebar`)
+* Pressing Space triggers **`Jump`** (clip: `Assets/Animation/Jumping.fbx`), playing a clean, athletic vertical leap both when stationary and when in motion.
 * **Seamless Landing:** When `IsGrounded` becomes true upon contact with the terrain:
   * Transitions directly into `Run` if horizontal speed is maintained.
   * Transitions into `Fighting Idle` if stationary and still within the 3-second combat timer.
@@ -87,20 +81,36 @@ Located at: `Assets/Animation/Player3D.controller`
 
 | State | Animation Clip Source | Loop | Description / Transition Logic |
 |---|---|---|---|
-| **`Idle`** | `Assets/Animation/Idle.fbx` | Yes | Default resting stance. Cycles to `Idle Look Around` at `exitTime = 1.0`. |
-| **`Idle Look Around`** | `Assets/Animation/Idle Look Around.fbx` | No | Periodic flavor idle cycle. Cycles back to `Idle` at `exitTime = 1.0`. Interrupted immediately by movement/combat. |
+| **`Idle`** | `Assets/Animation/Idle.fbx` | Yes | Clean, continuous resting stance. |
 | **`Run`** | `Assets/Animation/Run_InPlace.anim` | Yes | In-place forward run with zero forward root drift. Driven by Rigidbody2D velocity. |
-| **`Fighting Idle`** | `Assets/Animation/Combat/Fighting Idle.fbx` | Yes | Combat-ready stance maintained for 3 seconds post-attack before returning to `Idle`. |
-| **`Boxing 1`** | `Assets/Animation/Combat/Boxing 1.fbx` | No | Stationary combo opener. Chains into `Boxing 2` on next `AttackTrigger`. |
-| **`Boxing 2`** | `Assets/Animation/Combat/Boxing 2.fbx` | No | Stationary combo second hit. Chains into `Kick` on next `AttackTrigger`. |
-| **`Kick`** | `Assets/Animation/Combat/Kick.fbx` | No | Stationary combo finisher. Exits to `Fighting Idle`. |
-| **`Run to kick`** | `Assets/Animation/Combat/Run to kick.fbx` | No | Sprinting attack. Triggered by `AttackTrigger` when `Speed > 0.1`. Exits to `Fighting Idle`. |
-| **`Jump`** | `Assets/Animation/Jumping.fbx` | No | Stationary jump. AnyState -> `Jump` (`JumpTrigger` & `IsRunningJump == false`). |
-| **`Running Jump`**| `Assets/Animation/Running Jump.fbx` | No | Moving jump. AnyState -> `Running Jump` (`JumpTrigger` & `IsRunningJump == true`). |
+| **`Fighting Idle`** | `Assets/Animation/Combat/Fighting_Idle_InPlace.anim` | Yes | In-place combat stance maintained for 3 seconds post-attack before returning to `Idle`. |
+| **`Boxing 1`** | `Assets/Animation/Combat/Boxing_1_InPlace.anim` | No | Stationary combo opener (in-place). Chains into `Boxing 2` on next `AttackTrigger`. |
+| **`Boxing 2`** | `Assets/Animation/Combat/Boxing_2_InPlace.anim` | No | Stationary combo second hit (in-place). Chains into `Kick` on next `AttackTrigger`. |
+| **`Kick`** | `Assets/Animation/Combat/Kick_InPlace.anim` | No | Stationary combo finisher (in-place). Exits to `Fighting Idle`. |
+| **`Run to kick`** | `Assets/Animation/Combat/Run_to_kick_InPlace.anim` | No | Sprinting attack (in-place). Triggered by `AttackTrigger` when `Speed > 0.1`. Exits to `Fighting Idle`. |
+| **`Jump`** | `Assets/Animation/Jumping.fbx` | No | Unified jump state. AnyState -> `Jump` (`JumpTrigger`). |
 
 ---
 
-## 5. Mixamo Humanoid Importer Setup
+## 5. In-Place Combat Motion Standardization
+
+Raw Mixamo animations frequently contain significant forward root translation drift:
+* **Raw `Run to kick.fbx`** contained a massive **+1.98m forward drift** in `RootT.z`.
+* **Raw `Kick.fbx`** drifted forward by **+0.48m**.
+* **Raw `Boxing 1.fbx`** drifted forward by **+0.45m**.
+* **Raw `Boxing 2.fbx`** drifted forward by **+0.22m**.
+
+In a 2.5D sidescroller where `Rigidbody2D` and `CapsuleCollider2D` govern physics:
+1. Built-in animation root translation pushes the 3D visual mesh away from the 2D physics collider.
+2. When the animation clip completes, the visual mesh abruptly snaps back to the collider position, causing jarring hitching/jerking.
+3. Furthermore, script lunges (`playerRB.AddForce`) doubled with the animation displacement.
+
+**The Fix:**
+All combat animations were duplicated into clean `_InPlace.anim` assets where `RootT.z` and `RootT.x` are flattened to zero. The visual mesh remains perfectly anchored to the `CapsuleCollider2D`, while `PlayerController` provides smooth, responsive, physics-driven lunges that properly collide with walls, enemies, and obstacles without visual distortion or snapping.
+
+---
+
+## 6. Mixamo Humanoid Importer Setup
 
 Mixamo FBX files imported into Unity require Mecanim Humanoid retargeting:
 * **Avatar Setup:** Set to `ModelImporterAvatarSetup.CreateFromThisModel`.
@@ -119,40 +129,16 @@ Mixamo FBX files imported into Unity require Mecanim Humanoid retargeting:
   Instant 1-click toggle to alternate between the 2D sprite visual and the 3D model without breaking scene state.
 * **`Generate 3D Animator Controller`**:
   Generates `Assets/Animation/Player3D.controller` if missing.
-* **`Rebuild Full 3D Animator Controller (Combos & Jumps)`**:
-  Reconstructs all 10 states, clips, parameters, and combo/jump transitions from scratch.
+* **`Rebuild Full 3D Animator Controller (In-Place Combat & Unified Jump)`**:
+  Reconstructs all 8 in-place states, clips, parameters, and combo/jump transitions from scratch.
 
 ---
 
-## 7. Procedural Soft-Body Ponytail & Hair Physics (`SoftBodyPonytail.cs`)
+## 7. Procedural Animation Removal
 
-Located at: `Assets/Scripts/SoftBodyPonytail.cs`
-
-Because standard Humanoid Mecanim retargeting only animates core humanoid bones (Hips through Head), extra bones like the character's ponytail do not receive animation curves from Mixamo clips. The `SoftBodyPonytail` component breathes life into the character through real-time procedural physics:
-
-* **Dual-Strand Articulated Chains:**
-  * **Chain A (Upper Strand):** `Hair_A_01` -> `Hair_A_02` -> `Hair_A_03` -> `Hair_A_04` -> `Hair_A_04_end` (4 articulated segments).
-  * **Chain B (Lower Strand):** `Hair_B_01` -> `Hair_B_02` -> `Hair_B_03` -> `Hair_B_04` -> `Hair_B_04_end` (4 articulated segments).
-  * 197 skinned mesh vertices deform smoothly in real-time as the bones rotate.
-
-* **Physical Simulation Model:**
-  * **Verlet Integration:** Simulates momentum, fluid drag, and air resistance per node without numerical instability.
-  * **Distance Constraint:** Preserves exact bone lengths to machine precision (0 stretch or tearing).
-  * **Restoring Spring Force:** Elasticity pulls each joint back towards its animated rest shape (`stiffness = 0.38f`).
-  * **Aerodynamic Velocity Drag:** Character movement velocity drags and streams the hair back when sprinting (`movementLag = 0.45f`).
-  * **Jump Buoyancy:** Hair lags downwards on launch and floats weightlessly at jump peak / freefall (`jumpFloat = 0.8f`).
-  * **Subtle Idle Sway:** Gentle natural breathing and air fluctuation when stationary (`swayFrequency = 1.6f`, `swayAmplitude = 0.012f`).
-
-* **Sidescroller 180° Flip Recovery:**
-  * When the character snaps facing direction between Left (270°) and Right (90°), `flipCompensation` smoothly rotates the simulated particles around the head pivot to the new rear side, creating a realistic hair whip rather than clipping across the face.
-
-* **Head Anti-Penetration Sphere:**
-  * Spherical collider centered at the skull (`radius = 0.22f`) pushes hair nodes outwards so they never penetrate the back of the head or neck.
-
-* **Visceral Combat Recoil Integration:**
-  * `PlayerController.cs` automatically communicates with `SoftBodyPonytail.AddImpulse()` during attacks:
-    * Boxing punches deliver a crisp reactive whip (`3.5f`).
-    * Kick finisher delivers a sharp physical snap (`6.0f`).
-    * Running kick delivers a long trailing lunge impulse (`8.0f`).
-    * Leaping applies downward recoil (`4.0f`).
+Per user feedback, procedural ponytail physics (`SoftBodyPonytail.cs`) was completely removed from the project:
+* The character relies entirely on clean, author-rigged Humanoid animation clips from Mixamo.
+* This eliminates visual oscillation, unnatural wobble during 180° turns, and jitter during high-velocity attacks.
+* `PlayerController.cs` and `Player3DSetupWizard.cs` have been completely decoupled from procedural hair simulation.
+* All scene GameObjects in `DeadEnd.unity` are clean of any dangling or missing scripts.
 

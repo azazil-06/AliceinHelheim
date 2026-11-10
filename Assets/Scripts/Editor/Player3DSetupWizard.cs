@@ -107,15 +107,6 @@ public static class Player3DSetupWizard
             EditorUtility.SetDirty(animator);
         }
 
-        // 7b. Ensure Procedural Soft-Body Ponytail Physics is attached and configured
-        SoftBodyPonytail hairPhysics = instance.GetComponent<SoftBodyPonytail>();
-        if (hairPhysics == null)
-        {
-            hairPhysics = instance.AddComponent<SoftBodyPonytail>();
-        }
-        hairPhysics.Initialize();
-        EditorUtility.SetDirty(hairPhysics);
-
         // 8. Connect to PlayerController & disable 2D SpriteRenderer
         playerController.SetVisualRoot(visualTransform);
         visualTransform.localPosition = new Vector3(0f, -0.022f, 0f);
@@ -296,11 +287,11 @@ public static class Player3DSetupWizard
         return BuildFullAnimatorController();
     }
 
-    [MenuItem("Tools/Alice in Helheim/Rebuild Full 3D Animator Controller (Combos & Jumps)", false, 4)]
+    [MenuItem("Tools/Alice in Helheim/Rebuild Full 3D Animator Controller (In-Place Combat & Unified Jump)", false, 4)]
     public static void ForceRebuildAnimatorController()
     {
         BuildFullAnimatorController();
-        EditorUtility.DisplayDialog("Animator Controller", "3D Animator Controller rebuilt successfully with all 10 combat, locomotion, and jump states!", "OK");
+        EditorUtility.DisplayDialog("Animator Controller", "3D Animator Controller rebuilt successfully with in-place combat, locomotion, and unified jump!", "OK");
     }
 
     public static AnimatorController BuildFullAnimatorController()
@@ -337,21 +328,18 @@ public static class Player3DSetupWizard
 
         var sm = controller.layers[0].stateMachine;
 
-        // Load animation clips
+        // Load animation clips (prefer in-place variants to prevent root translation drift)
         AnimationClip idleClip = LoadClip("Assets/Animation/Idle.fbx");
-        AnimationClip lookAroundClip = LoadClip("Assets/Animation/Idle Look Around.fbx");
         AnimationClip runClip = LoadClip("Assets/Animation/Run_InPlace.anim") ?? LoadClip("Assets/Animation/Running.fbx");
-        AnimationClip fightIdleClip = LoadClip("Assets/Animation/Combat/Fighting Idle.fbx");
-        AnimationClip boxing1Clip = LoadClip("Assets/Animation/Combat/Boxing 1.fbx");
-        AnimationClip boxing2Clip = LoadClip("Assets/Animation/Combat/Boxing 2.fbx");
-        AnimationClip kickClip = LoadClip("Assets/Animation/Combat/Kick.fbx");
-        AnimationClip runKickClip = LoadClip("Assets/Animation/Combat/Run to kick.fbx");
+        AnimationClip fightIdleClip = LoadClip("Assets/Animation/Combat/Fighting_Idle_InPlace.anim") ?? LoadClip("Assets/Animation/Combat/Fighting Idle.fbx");
+        AnimationClip boxing1Clip = LoadClip("Assets/Animation/Combat/Boxing_1_InPlace.anim") ?? LoadClip("Assets/Animation/Combat/Boxing 1.fbx");
+        AnimationClip boxing2Clip = LoadClip("Assets/Animation/Combat/Boxing_2_InPlace.anim") ?? LoadClip("Assets/Animation/Combat/Boxing 2.fbx");
+        AnimationClip kickClip = LoadClip("Assets/Animation/Combat/Kick_InPlace.anim") ?? LoadClip("Assets/Animation/Combat/Kick.fbx");
+        AnimationClip runKickClip = LoadClip("Assets/Animation/Combat/Run_to_kick_InPlace.anim") ?? LoadClip("Assets/Animation/Combat/Run to kick.fbx");
         AnimationClip jumpClip = LoadClip("Assets/Animation/Jumping.fbx");
-        AnimationClip runningJumpClip = LoadClip("Assets/Animation/Running Jump.fbx");
 
-        // Create States
+        // Create 8 States (No Idle Look Around, No Running Jump)
         var sIdle = sm.AddState("Idle"); sIdle.motion = idleClip;
-        var sLookAround = sm.AddState("Idle Look Around"); sLookAround.motion = lookAroundClip;
         var sRun = sm.AddState("Run"); sRun.motion = runClip;
         var sFightIdle = sm.AddState("Fighting Idle"); sFightIdle.motion = fightIdleClip;
         var sBoxing1 = sm.AddState("Boxing 1"); sBoxing1.motion = boxing1Clip;
@@ -359,18 +347,10 @@ public static class Player3DSetupWizard
         var sKick = sm.AddState("Kick"); sKick.motion = kickClip;
         var sRunKick = sm.AddState("Run to kick"); sRunKick.motion = runKickClip;
         var sJump = sm.AddState("Jump"); sJump.motion = jumpClip;
-        var sRunningJump = sm.AddState("Running Jump"); sRunningJump.motion = runningJumpClip;
 
         sm.defaultState = sIdle;
 
         // 1. Idle transitions
-        var toLookAround = sIdle.AddTransition(sLookAround);
-        toLookAround.hasExitTime = true;
-        toLookAround.exitTime = 1f;
-        toLookAround.duration = 0.4f;
-        toLookAround.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
-        toLookAround.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
-
         var toRunFromIdle = sIdle.AddTransition(sRun);
         toRunFromIdle.hasExitTime = false;
         toRunFromIdle.duration = 0.15f;
@@ -393,37 +373,7 @@ public static class Player3DSetupWizard
         toRunKickFromIdle.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
         toRunKickFromIdle.AddCondition(AnimatorConditionMode.Equals, 3, "AttackIndex");
 
-        // 2. Idle Look Around transitions
-        var toIdleFromLookAround = sLookAround.AddTransition(sIdle);
-        toIdleFromLookAround.hasExitTime = true;
-        toIdleFromLookAround.exitTime = 1f;
-        toIdleFromLookAround.duration = 0.4f;
-        toIdleFromLookAround.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
-        toIdleFromLookAround.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
-
-        var toRunFromLookAround = sLookAround.AddTransition(sRun);
-        toRunFromLookAround.hasExitTime = false;
-        toRunFromLookAround.duration = 0.15f;
-        toRunFromLookAround.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
-
-        var toFightFromLookAround = sLookAround.AddTransition(sFightIdle);
-        toFightFromLookAround.hasExitTime = false;
-        toFightFromLookAround.duration = 0.2f;
-        toFightFromLookAround.AddCondition(AnimatorConditionMode.If, 0, "InCombat");
-
-        var toBox1FromLookAround = sLookAround.AddTransition(sBoxing1);
-        toBox1FromLookAround.hasExitTime = false;
-        toBox1FromLookAround.duration = 0.08f;
-        toBox1FromLookAround.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
-        toBox1FromLookAround.AddCondition(AnimatorConditionMode.Equals, 0, "AttackIndex");
-
-        var toRunKickFromLookAround = sLookAround.AddTransition(sRunKick);
-        toRunKickFromLookAround.hasExitTime = false;
-        toRunKickFromLookAround.duration = 0.08f;
-        toRunKickFromLookAround.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
-        toRunKickFromLookAround.AddCondition(AnimatorConditionMode.Equals, 3, "AttackIndex");
-
-        // 3. Run transitions
+        // 2. Run transitions
         var toIdleFromRun = sRun.AddTransition(sIdle);
         toIdleFromRun.hasExitTime = false;
         toIdleFromRun.duration = 0.15f;
@@ -448,7 +398,7 @@ public static class Player3DSetupWizard
         toRunKickFromRun.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
         toRunKickFromRun.AddCondition(AnimatorConditionMode.Equals, 3, "AttackIndex");
 
-        // 4. Fighting Idle transitions
+        // 3. Fighting Idle transitions
         var toIdleFromFight = sFightIdle.AddTransition(sIdle);
         toIdleFromFight.hasExitTime = false;
         toIdleFromFight.duration = 0.35f;
@@ -472,7 +422,7 @@ public static class Player3DSetupWizard
         toRunKickFromFight.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
         toRunKickFromFight.AddCondition(AnimatorConditionMode.Equals, 3, "AttackIndex");
 
-        // 5. Combat combo transitions
+        // 4. Combat combo transitions (In-Place animations)
         var toBox2 = sBoxing1.AddTransition(sBoxing2);
         toBox2.hasExitTime = false;
         toBox2.duration = 0.08f;
@@ -533,20 +483,13 @@ public static class Player3DSetupWizard
         runKickToRun.duration = 0.15f;
         runKickToRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
 
-        // 6. Jump transitions (AnyState)
+        // 5. Unified Jump transitions (AnyState -> Jump on spacebar)
         var anyToJump = sm.AddAnyStateTransition(sJump);
         anyToJump.hasExitTime = false;
         anyToJump.duration = 0.05f;
         anyToJump.AddCondition(AnimatorConditionMode.If, 0, "JumpTrigger");
-        anyToJump.AddCondition(AnimatorConditionMode.IfNot, 0, "IsRunningJump");
 
-        var anyToRunningJump = sm.AddAnyStateTransition(sRunningJump);
-        anyToRunningJump.hasExitTime = false;
-        anyToRunningJump.duration = 0.05f;
-        anyToRunningJump.AddCondition(AnimatorConditionMode.If, 0, "JumpTrigger");
-        anyToRunningJump.AddCondition(AnimatorConditionMode.If, 0, "IsRunningJump");
-
-        // 7. Jump landing transitions
+        // 6. Jump landing transitions
         var jumpToRun = sJump.AddTransition(sRun);
         jumpToRun.hasExitTime = false;
         jumpToRun.duration = 0.12f;
@@ -566,27 +509,6 @@ public static class Player3DSetupWizard
         jumpToIdle.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
         jumpToIdle.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
         jumpToIdle.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
-
-        // Running Jump landing transitions
-        var runJumpToRun = sRunningJump.AddTransition(sRun);
-        runJumpToRun.hasExitTime = false;
-        runJumpToRun.duration = 0.12f;
-        runJumpToRun.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
-        runJumpToRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
-
-        var runJumpToFight = sRunningJump.AddTransition(sFightIdle);
-        runJumpToFight.hasExitTime = false;
-        runJumpToFight.duration = 0.15f;
-        runJumpToFight.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
-        runJumpToFight.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
-        runJumpToFight.AddCondition(AnimatorConditionMode.If, 0, "InCombat");
-
-        var runJumpToIdle = sRunningJump.AddTransition(sIdle);
-        runJumpToIdle.hasExitTime = false;
-        runJumpToIdle.duration = 0.15f;
-        runJumpToIdle.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
-        runJumpToIdle.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
-        runJumpToIdle.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
