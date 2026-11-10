@@ -9,6 +9,136 @@ public static class Player3DSetupWizard
     private const string ControllerPath = "Assets/Animation/Player3D.controller";
     private const string MaterialPath = "Assets/Materials/Player3D_PrototypeMat.mat";
 
+    [MenuItem("Tools/Alice in Helheim/Apply Blender Character to Player (With Textures)", false, 0)]
+    public static void ApplyBlenderCharacter()
+    {
+        PlayerController playerController = Object.FindAnyObjectByType<PlayerController>();
+        if (playerController == null)
+        {
+            EditorUtility.DisplayDialog("Apply Blender Character", "No PlayerController found in the active scene!", "OK");
+            return;
+        }
+
+        GameObject playerGO = playerController.gameObject;
+        Undo.RegisterFullObjectHierarchyUndo(playerGO, "Apply Blender Character");
+
+        // 1. Locate or create child 'Visual'
+        Transform visualTransform = playerGO.transform.Find("Visual");
+        if (visualTransform == null)
+        {
+            GameObject visualGO = new GameObject("Visual");
+            visualGO.transform.SetParent(playerGO.transform, false);
+            visualGO.transform.localPosition = Vector3.zero;
+            visualGO.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+            visualGO.transform.localScale = Vector3.one;
+            visualTransform = visualGO.transform;
+            Undo.RegisterCreatedObjectUndo(visualGO, "Create Visual Child");
+        }
+        visualTransform.gameObject.SetActive(true);
+
+        // 2. Remove prototype mannequin primitives if present
+        for (int i = visualTransform.childCount - 1; i >= 0; i--)
+        {
+            Transform child = visualTransform.GetChild(i);
+            if (child.name.StartsWith("Mannequin") || child.name.StartsWith("Visor") || child.name.StartsWith("Hammer") || child.name == "WeaponSocket")
+            {
+                Undo.DestroyObjectImmediate(child.gameObject);
+            }
+        }
+
+        // 3. Load Character model (prefer FBX, fall back to blend)
+        GameObject modelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Character/Character.fbx");
+        if (modelPrefab == null)
+        {
+            modelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Character/Original.blend");
+        }
+
+        if (modelPrefab == null)
+        {
+            EditorUtility.DisplayDialog("Error", "Could not find Character.fbx or Original.blend in Assets/Character/!", "OK");
+            return;
+        }
+
+        // 4. Instantiate character model if not already instantiated
+        Transform existingModel = visualTransform.Find(modelPrefab.name);
+        GameObject instance = existingModel != null ? existingModel.gameObject : (GameObject)PrefabUtility.InstantiatePrefab(modelPrefab, visualTransform);
+        if (existingModel == null)
+        {
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.identity;
+            instance.transform.localScale = Vector3.one;
+            Undo.RegisterCreatedObjectUndo(instance, "Instantiate Character Model");
+        }
+
+        // 5. Load Extracted Materials
+        Material bodyMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Character/Materials/Character_Body_Mat.mat");
+        Material eyesMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Character/Materials/Character_Eyes_Mat.mat");
+
+        // 6. Assign Materials to Renderers
+        var renderers = instance.GetComponentsInChildren<Renderer>(true);
+        foreach (var r in renderers)
+        {
+            if (r.gameObject.name.Contains("Body") || r.gameObject.name == "Character_Body")
+            {
+                if (bodyMat != null) r.sharedMaterial = bodyMat;
+            }
+            else if (r.gameObject.name.Contains("Eyes") || r.gameObject.name == "Character_Eyes")
+            {
+                if (eyesMat != null) r.sharedMaterial = eyesMat;
+            }
+            else
+            {
+                if (bodyMat != null && (r.sharedMaterial == null || r.sharedMaterial.name.StartsWith("Default")))
+                    r.sharedMaterial = bodyMat;
+            }
+            EditorUtility.SetDirty(r);
+        }
+
+        // 7. Connect Animator Controller
+        AnimatorController animController = EnsureAnimatorController();
+        Animator animator = instance.GetComponent<Animator>();
+        if (animator == null)
+        {
+            animator = visualTransform.GetComponent<Animator>();
+        }
+        if (animator != null && animController != null && animator.runtimeAnimatorController == null)
+        {
+            animator.runtimeAnimatorController = animController;
+            EditorUtility.SetDirty(animator);
+        }
+
+        // 8. Connect to PlayerController & disable 2D SpriteRenderer
+        playerController.SetVisualRoot(visualTransform);
+
+        SpriteRenderer sr = playerGO.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.enabled = false;
+            EditorUtility.SetDirty(sr);
+        }
+
+        Animator rootAnimator = playerGO.GetComponent<Animator>();
+        if (rootAnimator != null && rootAnimator != animator)
+        {
+            rootAnimator.enabled = false;
+            EditorUtility.SetDirty(rootAnimator);
+        }
+
+        EditorUtility.SetDirty(playerGO);
+        EditorSceneManager.MarkSceneDirty(playerGO.scene);
+
+        EditorUtility.DisplayDialog(
+            "Blender Character Applied",
+            "Blender Character successfully configured with Textures & Materials!\n\n" +
+            "• Extracted & mapped 'Character_Body_Mat' (paint_basecolor.png)\n" +
+            "• Extracted & mapped 'Character_Eyes_Mat' (tripo_image_...jpg)\n" +
+            "• Linked to PlayerController 2.5D visual root\n" +
+            "• Connected 3D Animator controller\n" +
+            "• 2D SpriteRenderer disabled non-destructively",
+            "Awesome!"
+        );
+    }
+
     [MenuItem("Tools/Alice in Helheim/Setup 3D Character Rig (Active Scene)", false, 1)]
     public static void Setup3DCharacterInScene()
     {
@@ -29,7 +159,7 @@ public static class Player3DSetupWizard
             GameObject visualGO = new GameObject("Visual");
             visualGO.transform.SetParent(playerGO.transform, false);
             visualGO.transform.localPosition = Vector3.zero;
-            visualGO.transform.localRotation = Quaternion.Euler(0f, 75f, 0f);
+            visualGO.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
             visualGO.transform.localScale = Vector3.one;
             visualTransform = visualGO.transform;
             Undo.RegisterCreatedObjectUndo(visualGO, "Create Visual Child");

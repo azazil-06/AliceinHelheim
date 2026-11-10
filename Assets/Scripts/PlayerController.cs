@@ -20,10 +20,10 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Child transform that holds the 3D character model. If empty, automatically looks for a child named 'Visual' or with an Animator.")]
     [SerializeField] private Transform visualRoot;
     [Tooltip("Interpolation speed for turning yaw between left and right.")]
-    [SerializeField] private float turnSpeed = 16f;
-    [Tooltip("Slight yaw tilt toward the camera (in degrees) to give 2.5D depth and show the 3D model face/torso instead of a flat profile.")]
+    [SerializeField] private float turnSpeed = 24f;
+    [Tooltip("Yaw tilt toward the camera (in degrees). Set to 0 for pure side-profile sidescroller facing (strict 90° right / 270° left).")]
     [Range(0f, 45f)]
-    [SerializeField] private float cameraFacingTilt = 15f;
+    [SerializeField] private float cameraFacingTilt = 0f;
     [Tooltip("Instant flip or smooth rotation interpolation.")]
     [SerializeField] private bool smoothTurning = true;
 
@@ -61,7 +61,7 @@ public class PlayerController : MonoBehaviour
     public bool isAttacking = false;
     private bool isJumpPressed = false;
     private float facing = 1f; // 1 = Right, 0 = Left
-    private float targetYaw = 75f;
+    private float targetYaw = 90f;
 
     // Cached Animator Parameter Hashes for safe setting across 2D & 3D controllers
     private readonly HashSet<string> _animParams = new HashSet<string>();
