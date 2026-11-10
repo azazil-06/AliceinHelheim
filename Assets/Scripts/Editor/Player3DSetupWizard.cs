@@ -107,7 +107,7 @@ public static class Player3DSetupWizard
             EditorUtility.SetDirty(animator);
         }
 
-        // 8. Connect to PlayerController & disable 2D SpriteRenderer
+        // 8. Connect to PlayerController & remove any legacy 2D SpriteRenderer / root Animator
         playerController.SetVisualRoot(visualTransform);
         visualTransform.localPosition = new Vector3(0f, -0.022f, 0f);
         visualTransform.localRotation = Quaternion.Euler(0f, 105f, 0f);
@@ -121,19 +121,7 @@ public static class Player3DSetupWizard
             EditorUtility.SetDirty(capsule);
         }
 
-        SpriteRenderer sr = playerGO.GetComponent<SpriteRenderer>();
-        if (sr != null)
-        {
-            sr.enabled = false;
-            EditorUtility.SetDirty(sr);
-        }
-
-        Animator rootAnimator = playerGO.GetComponent<Animator>();
-        if (rootAnimator != null && rootAnimator != animator)
-        {
-            rootAnimator.enabled = false;
-            EditorUtility.SetDirty(rootAnimator);
-        }
+        RemoveLegacy2DComponents(playerGO, animator);
 
         EditorUtility.SetDirty(playerGO);
         EditorSceneManager.MarkSceneDirty(playerGO.scene);
@@ -145,7 +133,7 @@ public static class Player3DSetupWizard
             "• Extracted & mapped 'Character_Eyes_Mat' (tripo_image_...jpg)\n" +
             "• Linked to PlayerController 2.5D visual root\n" +
             "• Connected 3D Animator controller\n" +
-            "• 2D SpriteRenderer disabled non-destructively",
+            "• Removed any legacy 2D character components",
             "Awesome!"
         );
     }
@@ -195,14 +183,8 @@ public static class Player3DSetupWizard
             animator.runtimeAnimatorController = animController;
         }
 
-        // 4. Update PlayerController reference & disable 2D SpriteRenderer
+        // 4. Update PlayerController reference & remove any legacy 2D components
         playerController.SetVisualRoot(visualTransform);
-
-        SpriteRenderer sr = playerGO.GetComponent<SpriteRenderer>();
-        if (sr != null)
-        {
-            sr.enabled = false;
-        }
 
         visualTransform.localPosition = new Vector3(0f, -0.022f, 0f);
         playerGO.transform.rotation = Quaternion.identity;
@@ -215,12 +197,7 @@ public static class Player3DSetupWizard
             EditorUtility.SetDirty(capsule);
         }
 
-        // 5. If root GameObject has an Animator, disable it so child Animator drives the 3D rig
-        Animator rootAnimator = playerGO.GetComponent<Animator>();
-        if (rootAnimator != null && rootAnimator != animator)
-        {
-            rootAnimator.enabled = false;
-        }
+        RemoveLegacy2DComponents(playerGO, animator);
 
         EditorUtility.SetDirty(playerGO);
         EditorSceneManager.MarkSceneDirty(playerGO.scene);
@@ -229,56 +206,30 @@ public static class Player3DSetupWizard
             "Setup 3D Character",
             "3D Character Rig configured successfully!\n\n" +
             "• Child GameObject 'Visual' created/configured.\n" +
-            "• 2.5D smooth yaw rotation & camera tilt linked.\n" +
+            "• 2.5D smooth yaw rotation linked.\n" +
             "• Prototype 3D mannequin attached.\n" +
-            "• Player3D.controller linked to Animator.\n" +
-            "• 2D SpriteRenderer disabled non-destructively.\n\n" +
+            "• Player3D.controller linked to Animator.\n\n" +
             "You can replace the prototype mesh inside 'Visual' with your imported 3D model FBX whenever you are ready!",
             "Got it!"
         );
     }
 
-    [MenuItem("Tools/Alice in Helheim/Toggle 2D Sprite vs 3D Model", false, 2)]
-    public static void Toggle2DAnd3D()
+    private static void RemoveLegacy2DComponents(GameObject playerGO, Animator active3DAnimator)
     {
-        PlayerController playerController = Object.FindAnyObjectByType<PlayerController>();
-        if (playerController == null)
-        {
-            EditorUtility.DisplayDialog("Toggle Visual", "No PlayerController found in the scene!", "OK");
-            return;
-        }
-
-        GameObject playerGO = playerController.gameObject;
-        Undo.RegisterFullObjectHierarchyUndo(playerGO, "Toggle 2D/3D Visual");
-
-        Transform visualTransform = playerGO.transform.Find("Visual");
         SpriteRenderer sr = playerGO.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            Undo.DestroyObjectImmediate(sr);
+        }
+
         Animator rootAnimator = playerGO.GetComponent<Animator>();
-
-        if (visualTransform != null && visualTransform.gameObject.activeSelf)
+        if (rootAnimator != null && rootAnimator != active3DAnimator)
         {
-            // Switch to 2D
-            visualTransform.gameObject.SetActive(false);
-            if (sr != null) sr.enabled = true;
-            if (rootAnimator != null) rootAnimator.enabled = true;
-            playerController.SetVisualRoot(null);
-            Debug.Log("[AliceinHelheim] Switched Player visual to: 2D SPRITE");
+            Undo.DestroyObjectImmediate(rootAnimator);
         }
-        else
-        {
-            // Switch to 3D
-            if (visualTransform != null) visualTransform.gameObject.SetActive(true);
-            if (sr != null) sr.enabled = false;
-            if (rootAnimator != null) rootAnimator.enabled = false;
-            playerController.SetVisualRoot(visualTransform);
-            Debug.Log("[AliceinHelheim] Switched Player visual to: 3D MODEL");
-        }
-
-        EditorUtility.SetDirty(playerGO);
-        EditorSceneManager.MarkSceneDirty(playerGO.scene);
     }
 
-    [MenuItem("Tools/Alice in Helheim/Generate 3D Animator Controller", false, 3)]
+    [MenuItem("Tools/Alice in Helheim/Generate 3D Animator Controller", false, 2)]
     public static AnimatorController EnsureAnimatorController()
     {
         if (File.Exists(ControllerPath))
@@ -288,7 +239,7 @@ public static class Player3DSetupWizard
         return BuildFullAnimatorController();
     }
 
-    [MenuItem("Tools/Alice in Helheim/Rebuild Full 3D Animator Controller (Combos & Jumps)", false, 4)]
+    [MenuItem("Tools/Alice in Helheim/Rebuild Full 3D Animator Controller (Combos & Jumps)", false, 3)]
     public static void ForceRebuildAnimatorController()
     {
         BuildFullAnimatorController();
@@ -321,16 +272,6 @@ public static class Player3DSetupWizard
         controller.AddParameter("AttackTrigger", AnimatorControllerParameterType.Trigger);
         controller.AddParameter("JumpTrigger", AnimatorControllerParameterType.Trigger);
         controller.AddParameter("IsRunningJump", AnimatorControllerParameterType.Bool);
-
-        // Backward compatibility parameters
-        controller.AddParameter("Motion", AnimatorControllerParameterType.Float);
-        controller.AddParameter("Facing", AnimatorControllerParameterType.Float);
-        controller.AddParameter("isRunning", AnimatorControllerParameterType.Bool);
-        controller.AddParameter("isGrounded", AnimatorControllerParameterType.Bool);
-        controller.AddParameter("isJumping", AnimatorControllerParameterType.Trigger);
-        controller.AddParameter("falling", AnimatorControllerParameterType.Bool);
-        controller.AddParameter("Jump", AnimatorControllerParameterType.Trigger);
-        controller.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
 
         var sm = controller.layers[0].stateMachine;
 

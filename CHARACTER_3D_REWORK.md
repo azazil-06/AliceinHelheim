@@ -128,9 +128,7 @@ Mixamo FBX files imported into Unity require Mecanim Humanoid retargeting:
 ## 7. Unity Editor Tools (`Tools > Alice in Helheim`)
 
 * **`Apply Blender Character to Player (With Textures)`**:
-  Attaches the 3D character under `Player/Visual`, maps the extracted textures/materials (`Character_Body_Mat` & `Character_Eyes_Mat`), calibrates ground foot alignment and `CapsuleCollider2D`, sets default `Visual` yaw (`105°`), links `Player3D.controller`, and disables the 2D sprite.
-* **`Toggle 2D Sprite vs 3D Model`**:
-  Instant 1-click toggle to alternate between the 2D sprite visual and the 3D model without breaking scene state.
+  Attaches the 3D character under `Player/Visual`, maps the extracted textures/materials (`Character_Body_Mat` & `Character_Eyes_Mat`), calibrates ground foot alignment and `CapsuleCollider2D`, sets default `Visual` yaw (`105°`), links `Player3D.controller`, and removes any legacy 2D character components.
 * **`Generate 3D Animator Controller`**:
   Generates `Assets/Animation/Player3D.controller` if missing.
 * **`Rebuild Full 3D Animator Controller (Combos & Jumps)`**:

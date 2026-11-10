@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour
     private Collider2D playerCollider;
 
     [Header("Active Animator")]
-    [Tooltip("Active Animator driving the character. Automatically resolves to the 3D Character Animator or 2D sprite Animator.")]
+    [Tooltip("Active 3D character Animator under Visual.")]
     [SerializeField] private Animator playerAnimate;
 
     //------------------------------------------------------------
@@ -81,7 +81,7 @@ public class PlayerController : MonoBehaviour
     private float lastGroundedTime = -10f;
     private float combatTimer = 0f;
 
-    // Cached Animator Parameter Hashes for safe setting across 2D & 3D controllers
+    // Cached Animator parameter names for the 3D character controller
     private readonly HashSet<string> _animParams = new HashSet<string>();
 
     //------------------------------------------------------------------------------ 
@@ -121,18 +121,13 @@ public class PlayerController : MonoBehaviour
             visualRoot = transform.Find("Visual");
         }
 
-        if (visualRoot != null && visualRoot.gameObject.activeSelf)
+        if (visualRoot != null)
         {
             var anim = visualRoot.GetComponentInChildren<Animator>();
             if (anim != null)
             {
                 playerAnimate = anim;
             }
-        }
-
-        if (playerAnimate == null)
-        {
-            playerAnimate = GetComponent<Animator>();
         }
 
         if (playerAnimate != null)
@@ -149,8 +144,7 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Inspects and caches all available parameter names on the active Animator
-    /// to prevent runtime warnings when toggling between 2D and 3D controllers.
+    /// Inspects and caches all available parameter names on the active 3D Animator.
     /// </summary>
     public void CacheAnimatorParameters()
     {
@@ -199,7 +193,7 @@ public class PlayerController : MonoBehaviour
         // 4. Update 3D Visual Yaw Rotation
         UpdateVisualRotation();
 
-        // 5. Send Animation Parameters (supports both 2D sprite & 3D humanoid rigs)
+        // 5. Send Animation Parameters
         UpdateAnimator();
     }
 
@@ -354,8 +348,6 @@ public class PlayerController : MonoBehaviour
             SafeSetBool("IsRunningJump", isRunningJump);
             SafeSetBool("IsGrounded", false);
             SafeSetTrigger("JumpTrigger");
-            SafeSetTrigger("isJumping");
-            SafeSetTrigger("Jump");
         }
     }
 
@@ -436,7 +428,6 @@ public class PlayerController : MonoBehaviour
             // Trigger animation
             SafeSetInteger("AttackIndex", currentComboIndex);
             SafeSetTrigger("AttackTrigger");
-            SafeSetTrigger("Attack"); // Legacy
 
             StartCoroutine(PerformAttackHitCheck(attackDirX, reach, knockback, delay));
         }
@@ -472,7 +463,7 @@ public class PlayerController : MonoBehaviour
     }
 
     //----------------------------------------------------------------------
-    // Animation Bridge (Dual 2D & 3D controller compatibility)
+    // Animation Bridge
 
     void UpdateAnimator()
     {
@@ -480,7 +471,6 @@ public class PlayerController : MonoBehaviour
 
         float speedValue = Mathf.Abs(moveInput.x);
 
-        // Standard 3D Humanoid Animator parameters
         SafeSetFloat("Speed", speedValue);
         SafeSetFloat("MoveSpeed", speedValue);
         SafeSetBool("IsGrounded", isGrounded);
@@ -488,13 +478,6 @@ public class PlayerController : MonoBehaviour
         SafeSetBool("IsFalling", isFalling);
         SafeSetBool("InCombat", inCombat);
         SafeSetInteger("AttackIndex", currentComboIndex);
-
-        // Legacy 2D Sprite Animator parameters
-        SafeSetFloat("Motion", moveInput.x);
-        SafeSetFloat("Facing", facing);
-        SafeSetBool("isRunning", isMoving);
-        SafeSetBool("isGrounded", isGrounded);
-        SafeSetBool("falling", isFalling);
     }
 
     private void SafeSetFloat(string paramName, float value)
