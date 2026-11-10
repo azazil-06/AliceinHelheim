@@ -83,6 +83,8 @@ public class PlayerController : MonoBehaviour
 
     // Cached Animator parameter names for the 3D character controller
     private readonly HashSet<string> _animParams = new HashSet<string>();
+    private readonly RaycastHit2D[] _groundHits = new RaycastHit2D[8];
+    private ContactFilter2D _groundFilter;
 
     //------------------------------------------------------------------------------ 
     void Awake()
@@ -110,8 +112,17 @@ public class PlayerController : MonoBehaviour
         playerRB = GetComponent<Rigidbody2D>();
         playerCollider = GetComponent<Collider2D>();
 
+        ConfigureGroundFilter();
         ResolveActiveAnimator();
         UpdateTargetRotation(true);
+    }
+
+    private void ConfigureGroundFilter()
+    {
+        _groundFilter.useTriggers = false;
+        _groundFilter.SetLayerMask(groundLayer);
+        // Only treat upward-facing walkable slopes (~35..145 deg normals) as ground, ignoring vertical walls
+        _groundFilter.SetNormalAngle(35f, 145f);
     }
 
     public void ResolveActiveAnimator()
@@ -185,10 +196,10 @@ public class PlayerController : MonoBehaviour
         // 2. Perform 2.5D Ground Check
         CheckGround();
 
-        // 3. Movement, Jump & Combat Logic
-        CheckRunAndIdle();
+        // 3. Jump, Combat & Movement Logic (Jump/Attack first so CheckRunAndIdle/rotation use current airborne state)
         CheckJump();
         CheckAttack();
+        CheckRunAndIdle();
 
         // 4. Update 3D Visual Yaw Rotation
         UpdateVisualRotation();
@@ -231,30 +242,31 @@ public class PlayerController : MonoBehaviour
 
     void CheckGround()
     {
-        // Don't flag grounded during initial jump liftoff (first 0.15s or while ascending)
-        if (Time.time - lastJumpTime < 0.15f || (playerRB != null && playerRB.linearVelocity.y > 0.5f))
+        // Don't flag grounded during initial jump liftoff or while clearly ascending
+        if (Time.time - lastJumpTime < 0.15f || (playerRB != null && playerRB.linearVelocity.y > 0.25f))
         {
             isGrounded = false;
             isFalling = false;
             return;
         }
 
-        Vector2 checkOrigin;
-        float radius = groundCheckRadius;
+        // Hysteresis: while airborne require tighter proximity below feet so short hops don't snap to Run in mid-air
+        float probeDepth = isGrounded ? groundCheckDistance : Mathf.Min(groundCheckDistance, 0.04f);
+        GetGroundCheckCircle(probeDepth, out Vector2 checkOrigin, out float radius, out float castDistance);
 
-        if (playerCollider != null)
+        ConfigureGroundFilter();
+        int hitCount = Physics2D.CircleCast(checkOrigin, radius, Vector2.down, _groundFilter, _groundHits, castDistance);
+        bool foundFloor = false;
+        for (int i = 0; i < hitCount; i++)
         {
-            Bounds b = playerCollider.bounds;
-            checkOrigin = new Vector2(b.center.x, b.min.y + groundCheckOffset);
-            radius = Mathf.Min(groundCheckRadius, b.extents.x * 0.9f);
-        }
-        else
-        {
-            checkOrigin = (Vector2)transform.position + Vector2.up * groundCheckOffset;
+            if (_groundHits[i].collider != null)
+            {
+                foundFloor = true;
+                break;
+            }
         }
 
-        RaycastHit2D hit = Physics2D.CircleCast(checkOrigin, radius, Vector2.down, groundCheckDistance, groundLayer);
-        isGrounded = (hit.collider != null);
+        isGrounded = foundFloor;
         if (isGrounded)
         {
             lastGroundedTime = Time.time;
@@ -262,6 +274,24 @@ public class PlayerController : MonoBehaviour
 
         // Falling state
         isFalling = (!isGrounded && playerRB != null && playerRB.linearVelocity.y < fallThreshold);
+    }
+
+    private void GetGroundCheckCircle(float probeDepth, out Vector2 origin, out float radius, out float castDistance)
+    {
+        if (playerCollider != null)
+        {
+            Bounds b = playerCollider.bounds;
+            radius = Mathf.Min(groundCheckRadius, b.extents.x * 0.85f);
+            // Place circle bottom inside capsule (+groundCheckOffset) so downward probe extends exactly probeDepth below b.min.y
+            origin = new Vector2(b.center.x, b.min.y + radius + groundCheckOffset);
+        }
+        else
+        {
+            radius = groundCheckRadius;
+            origin = (Vector2)transform.position + Vector2.up * (radius + groundCheckOffset);
+        }
+
+        castDistance = groundCheckOffset + probeDepth;
     }
 
     //----------------------------------------------------------------------
@@ -550,22 +580,10 @@ public class PlayerController : MonoBehaviour
 
         // 2. Ground Check Gizmo
         Gizmos.color = isGrounded ? Color.green : Color.red;
-        Vector2 checkOrigin;
-        float radius = groundCheckRadius;
-
-        if (playerCollider != null)
-        {
-            Bounds b = playerCollider.bounds;
-            checkOrigin = new Vector2(b.center.x, b.min.y + groundCheckOffset);
-            radius = Mathf.Min(groundCheckRadius, b.extents.x * 0.9f);
-        }
-        else
-        {
-            checkOrigin = (Vector2)transform.position + Vector2.up * groundCheckOffset;
-        }
+        GetGroundCheckCircle(groundCheckDistance, out Vector2 checkOrigin, out float radius, out float castDistance);
 
         Gizmos.DrawWireSphere(checkOrigin, radius);
-        Gizmos.DrawWireSphere(checkOrigin + Vector2.down * groundCheckDistance, radius);
-        Gizmos.DrawLine(checkOrigin, checkOrigin + Vector2.down * groundCheckDistance);
+        Gizmos.DrawWireSphere(checkOrigin + Vector2.down * castDistance, radius);
+        Gizmos.DrawLine(checkOrigin, checkOrigin + Vector2.down * castDistance);
     }
 }
