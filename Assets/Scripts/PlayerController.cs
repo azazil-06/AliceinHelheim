@@ -19,13 +19,13 @@ public class PlayerController : MonoBehaviour
     [Header("3D Visual & 2.5D Orientation")]
     [Tooltip("Child transform that holds the 3D character model. If empty, automatically looks for a child named 'Visual' or with an Animator.")]
     [SerializeField] private Transform visualRoot;
-    [Tooltip("Interpolation speed for turning yaw between left and right.")]
-    [SerializeField] private float turnSpeed = 24f;
+    [Tooltip("Interpolation speed for turning yaw between left and right (used if Smooth Turning is enabled).")]
+    [SerializeField] private float turnSpeed = 30f;
     [Tooltip("Yaw tilt toward the camera (in degrees). Set to 0 for pure side-profile sidescroller facing (strict 90° right / 270° left).")]
     [Range(0f, 45f)]
     [SerializeField] private float cameraFacingTilt = 0f;
-    [Tooltip("Instant flip or smooth rotation interpolation.")]
-    [SerializeField] private bool smoothTurning = true;
+    [Tooltip("Instant flip (classic crisp sidescroller feel) or smooth rotation interpolation.")]
+    [SerializeField] private bool smoothTurning = false;
 
     [Header("Ground Check (2.5D Physics)")]
     [Tooltip("LayerMask of the ground/terrain (Layer 14 'base').")]
@@ -70,6 +70,8 @@ public class PlayerController : MonoBehaviour
     void Awake()
     {
         control = new InputSystem_Actions();
+        // Enforce upright identity rotation on Player root for strict 2D physics plane
+        transform.rotation = Quaternion.identity;
     }
 
     void OnEnable()
@@ -233,16 +235,18 @@ public class PlayerController : MonoBehaviour
 
     void UpdateTargetRotation(bool instant)
     {
-        // 2.5D Camera Angle:
-        // When facing right (+X): rotate to 90 degrees yaw, tilted slightly towards camera (+Z)
-        // When facing left (-X): rotate to 270 degrees yaw (-90), tilted slightly towards camera (+Z)
+        // 2.5D Sidescroller Yaw Orientation:
+        // Pure sidescroller: Facing Right (+X) = 90 deg, Facing Left (-X) = 270 deg.
+        // Camera is at -Z looking forward along +Z. Tilting toward viewer/camera (-Z):
+        // Right: 90 + cameraFacingTilt
+        // Left:  270 - cameraFacingTilt
         if (facing == 1f)
         {
-            targetYaw = 90f - cameraFacingTilt;
+            targetYaw = 90f + cameraFacingTilt;
         }
         else
         {
-            targetYaw = 270f + cameraFacingTilt;
+            targetYaw = 270f - cameraFacingTilt;
         }
 
         if (instant && visualRoot != null)

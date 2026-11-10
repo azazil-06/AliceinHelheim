@@ -109,6 +109,16 @@ public static class Player3DSetupWizard
 
         // 8. Connect to PlayerController & disable 2D SpriteRenderer
         playerController.SetVisualRoot(visualTransform);
+        visualTransform.localPosition = new Vector3(0f, -0.022f, 0f);
+        playerGO.transform.rotation = Quaternion.identity;
+
+        CapsuleCollider2D capsule = playerGO.GetComponent<CapsuleCollider2D>();
+        if (capsule != null)
+        {
+            capsule.offset = new Vector2(0f, 0.42f);
+            capsule.size = new Vector2(0.22f, 0.88f);
+            EditorUtility.SetDirty(capsule);
+        }
 
         SpriteRenderer sr = playerGO.GetComponent<SpriteRenderer>();
         if (sr != null)
@@ -191,6 +201,17 @@ public static class Player3DSetupWizard
         if (sr != null)
         {
             sr.enabled = false;
+        }
+
+        visualTransform.localPosition = new Vector3(0f, -0.022f, 0f);
+        playerGO.transform.rotation = Quaternion.identity;
+
+        CapsuleCollider2D capsule = playerGO.GetComponent<CapsuleCollider2D>();
+        if (capsule != null)
+        {
+            capsule.offset = new Vector2(0f, 0.42f);
+            capsule.size = new Vector2(0.22f, 0.88f);
+            EditorUtility.SetDirty(capsule);
         }
 
         // 5. If root GameObject has an Animator, disable it so child Animator drives the 3D rig
