@@ -54,6 +54,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float hitImpactDelay = 0.16f;
     [Tooltip("Optional weapon attachment point in the 3D rig's hand.")]
     [SerializeField] private Transform weaponSocket;
+    [Tooltip("Optional reference to procedural ponytail soft-body physics.")]
+    [SerializeField] private SoftBodyPonytail ponytailPhysics;
 
     [Header("Falling & Air State")]
     [SerializeField] private float fallThreshold = -0.5f;
@@ -86,12 +88,13 @@ public class PlayerController : MonoBehaviour
 
     void OnEnable()
     {
+        if (control == null) control = new InputSystem_Actions();
         control.Player.Enable();
     }
 
     void OnDisable()
     {
-        control.Player.Disable();
+        if (control != null) control.Player.Disable();
     }
 
     void Start()
@@ -135,6 +138,11 @@ public class PlayerController : MonoBehaviour
 
         CacheAnimatorParameters();
         UpdateTargetRotation(true);
+
+        if (ponytailPhysics == null)
+        {
+            ponytailPhysics = GetComponentInChildren<SoftBodyPonytail>();
+        }
     }
 
     /// <summary>
@@ -155,6 +163,12 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (control == null)
+        {
+            control = new InputSystem_Actions();
+            control.Player.Enable();
+        }
+
         // 1. Read Input
         moveInput = new Vector2(control.Player.Move.ReadValue<Vector2>().x, 0f);
         isJumpPressed = control.Player.Jump.IsPressed();
@@ -305,6 +319,11 @@ public class PlayerController : MonoBehaviour
             SafeSetTrigger("JumpTrigger");
             SafeSetTrigger("isJumping");
             SafeSetTrigger("Jump");
+
+            if (ponytailPhysics != null)
+            {
+                ponytailPhysics.AddImpulse(new Vector3(0f, -4f, 0f));
+            }
         }
     }
 
@@ -381,6 +400,13 @@ public class PlayerController : MonoBehaviour
 
             // Apply lunge impulse in strike direction
             playerRB.AddForce(new Vector2(attackDirX * lunge, 0f), ForceMode2D.Impulse);
+
+            // Hair whip impulse
+            if (ponytailPhysics != null)
+            {
+                float hairWhip = isMoving ? 8f : (currentComboIndex == 2 ? 6f : 3.5f);
+                ponytailPhysics.AddImpulse(new Vector3(-attackDirX * hairWhip, 1.8f, 0f));
+            }
 
             // Trigger animation
             SafeSetInteger("AttackIndex", currentComboIndex);
@@ -489,6 +515,11 @@ public class PlayerController : MonoBehaviour
         if (visualRoot != null)
         {
             playerAnimate = visualRoot.GetComponentInChildren<Animator>();
+            ponytailPhysics = visualRoot.GetComponentInChildren<SoftBodyPonytail>();
+        }
+        else
+        {
+            ponytailPhysics = null;
         }
         CacheAnimatorParameters();
         UpdateTargetRotation(true);

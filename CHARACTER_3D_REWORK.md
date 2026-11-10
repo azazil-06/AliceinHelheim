@@ -121,3 +121,38 @@ Mixamo FBX files imported into Unity require Mecanim Humanoid retargeting:
   Generates `Assets/Animation/Player3D.controller` if missing.
 * **`Rebuild Full 3D Animator Controller (Combos & Jumps)`**:
   Reconstructs all 10 states, clips, parameters, and combo/jump transitions from scratch.
+
+---
+
+## 7. Procedural Soft-Body Ponytail & Hair Physics (`SoftBodyPonytail.cs`)
+
+Located at: `Assets/Scripts/SoftBodyPonytail.cs`
+
+Because standard Humanoid Mecanim retargeting only animates core humanoid bones (Hips through Head), extra bones like the character's ponytail do not receive animation curves from Mixamo clips. The `SoftBodyPonytail` component breathes life into the character through real-time procedural physics:
+
+* **Dual-Strand Articulated Chains:**
+  * **Chain A (Upper Strand):** `Hair_A_01` -> `Hair_A_02` -> `Hair_A_03` -> `Hair_A_04` -> `Hair_A_04_end` (4 articulated segments).
+  * **Chain B (Lower Strand):** `Hair_B_01` -> `Hair_B_02` -> `Hair_B_03` -> `Hair_B_04` -> `Hair_B_04_end` (4 articulated segments).
+  * 197 skinned mesh vertices deform smoothly in real-time as the bones rotate.
+
+* **Physical Simulation Model:**
+  * **Verlet Integration:** Simulates momentum, fluid drag, and air resistance per node without numerical instability.
+  * **Distance Constraint:** Preserves exact bone lengths to machine precision (0 stretch or tearing).
+  * **Restoring Spring Force:** Elasticity pulls each joint back towards its animated rest shape (`stiffness = 0.38f`).
+  * **Aerodynamic Velocity Drag:** Character movement velocity drags and streams the hair back when sprinting (`movementLag = 0.45f`).
+  * **Jump Buoyancy:** Hair lags downwards on launch and floats weightlessly at jump peak / freefall (`jumpFloat = 0.8f`).
+  * **Subtle Idle Sway:** Gentle natural breathing and air fluctuation when stationary (`swayFrequency = 1.6f`, `swayAmplitude = 0.012f`).
+
+* **Sidescroller 180° Flip Recovery:**
+  * When the character snaps facing direction between Left (270°) and Right (90°), `flipCompensation` smoothly rotates the simulated particles around the head pivot to the new rear side, creating a realistic hair whip rather than clipping across the face.
+
+* **Head Anti-Penetration Sphere:**
+  * Spherical collider centered at the skull (`radius = 0.22f`) pushes hair nodes outwards so they never penetrate the back of the head or neck.
+
+* **Visceral Combat Recoil Integration:**
+  * `PlayerController.cs` automatically communicates with `SoftBodyPonytail.AddImpulse()` during attacks:
+    * Boxing punches deliver a crisp reactive whip (`3.5f`).
+    * Kick finisher delivers a sharp physical snap (`6.0f`).
+    * Running kick delivers a long trailing lunge impulse (`8.0f`).
+    * Leaping applies downward recoil (`4.0f`).
+

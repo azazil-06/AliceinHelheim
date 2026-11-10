@@ -107,6 +107,15 @@ public static class Player3DSetupWizard
             EditorUtility.SetDirty(animator);
         }
 
+        // 7b. Ensure Procedural Soft-Body Ponytail Physics is attached and configured
+        SoftBodyPonytail hairPhysics = instance.GetComponent<SoftBodyPonytail>();
+        if (hairPhysics == null)
+        {
+            hairPhysics = instance.AddComponent<SoftBodyPonytail>();
+        }
+        hairPhysics.Initialize();
+        EditorUtility.SetDirty(hairPhysics);
+
         // 8. Connect to PlayerController & disable 2D SpriteRenderer
         playerController.SetVisualRoot(visualTransform);
         visualTransform.localPosition = new Vector3(0f, -0.022f, 0f);
