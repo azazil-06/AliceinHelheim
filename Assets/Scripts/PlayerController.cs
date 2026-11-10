@@ -37,8 +37,14 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Offset from bottom of collider for raycast origin.")]
     [SerializeField] private float groundCheckOffset = 0.05f;
 
-    [Header("Attack Movement & Combat")]
-    [SerializeField] private float attackLungeForce = 15f;
+    [Header("Combat & Combos")]
+    [Tooltip("How long (in seconds) the character stays in Fighting Idle before returning to normal Idle.")]
+    [SerializeField] private float combatIdleDuration = 3.0f;
+    [Tooltip("Time window (in seconds) after an attack to chain into the next combo attack.")]
+    [SerializeField] private float comboWindow = 0.9f;
+    [SerializeField] private float runningKickLunge = 18f;
+    [SerializeField] private float boxingLunge = 6f;
+    [SerializeField] private float kickLunge = 12f;
     [SerializeField] private float lungeFriction = 5f;
     [Tooltip("How far the attack can reach to hit enemies.")]
     [SerializeField] private float attackRange = 2.4f;
@@ -59,9 +65,13 @@ public class PlayerController : MonoBehaviour
     public bool isMoving;
     public bool isFalling = false;
     public bool isAttacking = false;
+    public bool inCombat = false;
     private bool isJumpPressed = false;
     private float facing = 1f; // 1 = Right, 0 = Left
     private float targetYaw = 90f;
+    private int currentComboIndex = 0; // 0 = Boxing 1, 1 = Boxing 2, 2 = Kick, 3 = Run to kick
+    private float lastAttackTime = -10f;
+    private float combatTimer = 0f;
 
     // Cached Animator Parameter Hashes for safe setting across 2D & 3D controllers
     private readonly HashSet<string> _animParams = new HashSet<string>();
@@ -149,6 +159,17 @@ public class PlayerController : MonoBehaviour
         moveInput = new Vector2(control.Player.Move.ReadValue<Vector2>().x, 0f);
         isJumpPressed = control.Player.Jump.IsPressed();
         isMoving = Mathf.Abs(moveInput.x) > 0.1f;
+
+        // Update Fighting Idle combat timeout
+        if (inCombat)
+        {
+            combatTimer -= Time.deltaTime;
+            if (combatTimer <= 0f)
+            {
+                inCombat = false;
+                currentComboIndex = 0;
+            }
+        }
 
         // 2. Perform 2.5D Ground Check
         CheckGround();
@@ -279,6 +300,9 @@ public class PlayerController : MonoBehaviour
             playerRB.linearVelocity = new Vector2(playerRB.linearVelocity.x, 0f);
             playerRB.AddForce(Vector2.up * jumpMultiplier, ForceMode2D.Impulse);
 
+            bool isRunningJump = isMoving;
+            SafeSetBool("IsRunningJump", isRunningJump);
+            SafeSetTrigger("JumpTrigger");
             SafeSetTrigger("isJumping");
             SafeSetTrigger("Jump");
         }
@@ -290,11 +314,6 @@ public class PlayerController : MonoBehaviour
 
         if (control.Player.Attack.triggered)
         {
-            SafeSetTrigger("Attack");
-
-            // Stop current horizontal movement to prep for lunge impulse
-            playerRB.linearVelocity = new Vector2(0f, playerRB.linearVelocity.y);
-
             // Determine attack facing direction
             float attackDirX = facing == 1f ? 1f : -1f;
             if (Mathf.Abs(moveInput.x) > 0.1f)
@@ -302,17 +321,81 @@ public class PlayerController : MonoBehaviour
                 attackDirX = Mathf.Sign(moveInput.x);
                 facing = attackDirX > 0f ? 1f : 0f;
                 UpdateTargetRotation(true); // Snap orientation towards strike direction
-                playerRB.AddForce(new Vector2(attackDirX * attackLungeForce, 0f), ForceMode2D.Impulse);
             }
 
-            StartCoroutine(PerformAttackHitCheck(attackDirX));
+            float lunge;
+            float reach;
+            float knockback;
+            float delay;
+
+            // Stop current horizontal velocity
+            playerRB.linearVelocity = new Vector2(0f, playerRB.linearVelocity.y);
+
+            if (isMoving)
+            {
+                // Run to kick (running attack)
+                currentComboIndex = 3;
+                lunge = runningKickLunge;
+                reach = attackRange * 1.25f;
+                knockback = attackKnockback * 1.3f;
+                delay = hitImpactDelay * 1.2f;
+            }
+            else
+            {
+                // Stationary combo: Boxing 1 -> Boxing 2 -> Kick
+                if (Time.time - lastAttackTime <= comboWindow)
+                {
+                    if (currentComboIndex == 0)
+                        currentComboIndex = 1; // Boxing 2
+                    else if (currentComboIndex == 1)
+                        currentComboIndex = 2; // Kick finisher
+                    else
+                        currentComboIndex = 0; // Boxing 1
+                }
+                else
+                {
+                    currentComboIndex = 0; // Boxing 1
+                }
+
+                if (currentComboIndex == 2)
+                {
+                    // Kick finisher
+                    lunge = kickLunge;
+                    reach = attackRange * 1.15f;
+                    knockback = attackKnockback * 1.4f;
+                    delay = hitImpactDelay * 1.3f;
+                }
+                else
+                {
+                    // Boxing punches
+                    lunge = boxingLunge;
+                    reach = attackRange * 0.9f;
+                    knockback = attackKnockback * 0.8f;
+                    delay = hitImpactDelay;
+                }
+            }
+
+            lastAttackTime = Time.time;
+            combatTimer = combatIdleDuration;
+            inCombat = true;
+
+            // Apply lunge impulse in strike direction
+            playerRB.AddForce(new Vector2(attackDirX * lunge, 0f), ForceMode2D.Impulse);
+
+            // Trigger animation
+            SafeSetInteger("AttackIndex", currentComboIndex);
+            SafeSetTrigger("AttackTrigger");
+            SafeSetTrigger("Attack"); // Legacy
+
+            StartCoroutine(PerformAttackHitCheck(attackDirX, reach, knockback, delay));
         }
     }
 
-    private System.Collections.IEnumerator PerformAttackHitCheck(float attackDirX)
+    private System.Collections.IEnumerator PerformAttackHitCheck(float attackDirX, float reach, float knockback, float delay)
     {
-        if (hitImpactDelay > 0f)
-            yield return new WaitForSeconds(hitImpactDelay);
+        isAttacking = true;
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
 
         Vector2 attackOrigin = transform.position;
         Vector2 hitDir = new Vector2(attackDirX, 0f).normalized;
@@ -326,11 +409,15 @@ public class PlayerController : MonoBehaviour
             // Check if spyder is within attack reach and in front of player
             bool inFront = (attackDirX > 0f && toSpyder.x > -0.6f) || (attackDirX < 0f && toSpyder.x < 0.6f);
 
-            if (dist <= attackRange && inFront)
+            if (dist <= reach && inFront)
             {
-                spyder.TakeHit(attackKnockback, hitDir);
+                spyder.TakeHit(knockback, hitDir);
             }
         }
+
+        // Brief delay before character unlocks movement after strike
+        yield return new WaitForSeconds(0.18f);
+        isAttacking = false;
     }
 
     //----------------------------------------------------------------------
@@ -348,6 +435,8 @@ public class PlayerController : MonoBehaviour
         SafeSetBool("IsGrounded", isGrounded);
         SafeSetBool("IsMoving", isMoving);
         SafeSetBool("IsFalling", isFalling);
+        SafeSetBool("InCombat", inCombat);
+        SafeSetInteger("AttackIndex", currentComboIndex);
 
         // Legacy 2D Sprite Animator parameters
         SafeSetFloat("Motion", moveInput.x);
@@ -367,6 +456,12 @@ public class PlayerController : MonoBehaviour
     {
         if (_animParams.Contains(paramName))
             playerAnimate.SetBool(paramName, value);
+    }
+
+    private void SafeSetInteger(string paramName, int value)
+    {
+        if (_animParams.Contains(paramName))
+            playerAnimate.SetInteger(paramName, value);
     }
 
     private void SafeSetTrigger(string paramName)

@@ -47,71 +47,77 @@ Instead of rewriting the entire game physics to full 3D, the project utilizes a 
 
 ---
 
-## 3. Core Script Improvements
+## 3. Combat Combo & Dual Jump System
 
-### `PlayerController.cs`
-Located at: `Assets/Scripts/PlayerController.cs`
+### 1. 3-Hit Stationary Combo (Press `X` or Left Mouse Button)
+When stationary (`Speed < 0.1`):
+* **Hit 1:** `Boxing 1` — Fast left punch, `boxingLunge = 6f`, 0.9f reach.
+* **Hit 2:** `Boxing 2` — Chained right cross if `X` is pressed within `comboWindow = 0.9s`.
+* **Hit 3:** `Kick` — Powerful finishing roundhouse/kick, `kickLunge = 12f`, 1.1x reach, increased knockback.
+* Resets to `Boxing 1` after the finisher or if the combo window expires.
 
-1. **Root Transform & 3D Visual Root:**
-   * **`transform.rotation`:** Automatically locked to `Quaternion.identity` in `Awake()`.
-   * **`visualRoot` (Transform):** Child holding the 3D model.
-   * **`smoothTurning` (bool, default `false`):** Instant snappy flip between Left (270°) and Right (90°).
-   * **`cameraFacingTilt` (default `0°`):** Pure 90°/270° sidescroller angles.
-   * **`turnSpeed` (float, default `30`):** Fast interpolation if smooth turning is enabled.
+### 2. Running Kick (Press `X` while running)
+* When moving (`Speed > 0.1` / `isMoving = true`), pressing `X` executes **`Run to kick`** (Combo Index 3).
+* Applies an aggressive lunge impulse (`runningKickLunge = 18f`), delivering long-range gap-closing strikes against enemies.
 
-2. **Accurate 2.5D Ground Check:**
-   * Downward circle/collider cast against Layer 14 (`base`).
-   * Configurable `groundCheckDistance`, `groundCheckRadius`, and `groundCheckOffset`.
-   * Displays visual debug Gizmos in the Scene View (green = grounded, red = airborne).
+### 3. Dynamic Fighting Idle Stance
+* After executing any attack (boxing combo or running kick), the character enters **`Fighting Idle`**.
+* The character maintains an alert combat posture for **3.0 seconds** (`combatIdleDuration = 3.0f`).
+* If no further attacks occur within this duration, the character smoothly eases back into standard **`Idle`**.
+* **Zero Delay Interrupt:** If movement or jumping input is received during `Fighting Idle`, the character transitions immediately to `Run` or `Jump` without waiting for the animation or timer to finish.
 
-3. **Dual Animator Compatibility:**
-   * **Modern 3D Humanoid Parameters:**
-     * `Speed` (Float) / `MoveSpeed` (Float)
-     * `IsGrounded` (Bool)
-     * `IsMoving` (Bool)
-     * `IsFalling` (Bool)
-     * `Jump` (Trigger)
-     * `Attack` (Trigger)
-   * **Legacy 2D Sprite Parameters:**
-     * `Motion` (Float)
-     * `Facing` (Float: 1 = Right, 0 = Left)
-     * `isRunning` (Bool)
-     * `isGrounded` (Bool)
-     * `falling` (Bool)
-     * `isJumping` (Trigger)
+### 4. Idle Cycling (`Idle` <-> `Idle Look Around`)
+* When resting in normal `Idle`, the animation cycles naturally into **`Idle Look Around`** at the completion of an idle loop (`exitTime = 1.0f`).
+* At the end of `Idle Look Around`, it smoothly loops back to `Idle`.
+* **Immediate Responsiveness:** Any movement, jump, or attack input instantly cancels the looking-around animation and enters the requested state with zero lag.
 
-4. **Combat & Sledgehammer:**
-   * Attack lunges immediately snap the model's orientation towards the strike direction (Left or Right).
-   * Hit detection against `SpyderBehaviour` remains fully operational.
+### 5. Dual Jump Mechanics (Press `Spacebar`)
+* **Stationary Jump:** Pressing Space while still triggers **`Jumping`** (clip: `Assets/Animation/Jumping.fbx`), playing a vertical airborne leap.
+* **Running Jump:** Pressing Space while moving triggers **`Running Jump`** (clip: `Assets/Animation/Running Jump.fbx`), playing an athletic forward leap.
+* **Seamless Landing:** When `IsGrounded` becomes true upon contact with the terrain:
+  * Transitions directly into `Run` if horizontal speed is maintained.
+  * Transitions into `Fighting Idle` if stationary and still within the 3-second combat timer.
+  * Transitions into standard `Idle` if stationary and out of combat.
 
 ---
 
-## 4. Animation Setup (`Player3D.controller`)
+## 4. Animation State Machine Breakdown (`Player3D.controller`)
 
-The 3D state machine is located at: `Assets/Animation/Player3D.controller`
+Located at: `Assets/Animation/Player3D.controller`
 
-| State | Animation Clip Source | Settings | Trigger Condition |
+| State | Animation Clip Source | Loop | Description / Transition Logic |
 |---|---|---|---|
-| **`Idle`** | `Assets/Animation/Idle.fbx` | Humanoid, Looping (`loopTime = true`) | `Speed < 0.1` (Default State) |
-| **`Run`** | `Assets/Animation/Run_InPlace.anim` | Humanoid, Looping (`loopTime = true`), `RootT.z` stripped for smooth in-place locomotion | `Speed > 0.1` |
-| **`Jump`** | *(Ready for Jump clip)* | Humanoid | `Jump` trigger |
-| **`Fall`** | *(Ready for Fall clip)* | Humanoid | `IsFalling == true` |
-| **`Attack`**| *(Ready for Attack clip)* | Humanoid | `Attack` trigger |
-
-* **How In-Place Running Eliminates Jerkiness:**
-  * Raw FBX animations often include root translation drift (+3.01m per cycle in `Running.fbx`).
-  * `Run_InPlace.anim` zeroes the forward translation while preserving the natural hip bounce (`RootT.y`) and foot stride.
-  * Rigidbody2D drives world motion at `moveSpeed = 10`, ensuring completely smooth, continuous movement with no snapping.
-
-* **How Left/Right Motion Plays:**
-  * When pressing **D** (Right), `PlayerController` points the 3D model right (90°) and sets `Speed > 0.1`, playing `Run_InPlace` to the right.
-  * When pressing **A** (Left), `PlayerController` points the 3D model left (270°) and sets `Speed > 0.1`, playing `Run_InPlace` to the left.
-  * When releasing the keys, the character enters `Idle` and stays facing whichever direction you were last moving.
+| **`Idle`** | `Assets/Animation/Idle.fbx` | Yes | Default resting stance. Cycles to `Idle Look Around` at `exitTime = 1.0`. |
+| **`Idle Look Around`** | `Assets/Animation/Idle Look Around.fbx` | No | Periodic flavor idle cycle. Cycles back to `Idle` at `exitTime = 1.0`. Interrupted immediately by movement/combat. |
+| **`Run`** | `Assets/Animation/Run_InPlace.anim` | Yes | In-place forward run with zero forward root drift. Driven by Rigidbody2D velocity. |
+| **`Fighting Idle`** | `Assets/Animation/Combat/Fighting Idle.fbx` | Yes | Combat-ready stance maintained for 3 seconds post-attack before returning to `Idle`. |
+| **`Boxing 1`** | `Assets/Animation/Combat/Boxing 1.fbx` | No | Stationary combo opener. Chains into `Boxing 2` on next `AttackTrigger`. |
+| **`Boxing 2`** | `Assets/Animation/Combat/Boxing 2.fbx` | No | Stationary combo second hit. Chains into `Kick` on next `AttackTrigger`. |
+| **`Kick`** | `Assets/Animation/Combat/Kick.fbx` | No | Stationary combo finisher. Exits to `Fighting Idle`. |
+| **`Run to kick`** | `Assets/Animation/Combat/Run to kick.fbx` | No | Sprinting attack. Triggered by `AttackTrigger` when `Speed > 0.1`. Exits to `Fighting Idle`. |
+| **`Jump`** | `Assets/Animation/Jumping.fbx` | No | Stationary jump. AnyState -> `Jump` (`JumpTrigger` & `IsRunningJump == false`). |
+| **`Running Jump`**| `Assets/Animation/Running Jump.fbx` | No | Moving jump. AnyState -> `Running Jump` (`JumpTrigger` & `IsRunningJump == true`). |
 
 ---
 
-## 5. Unity Editor Tools (`Tools > Alice in Helheim`)
+## 5. Mixamo Humanoid Importer Setup
 
-* **`Apply Blender Character to Player (With Textures)`**: Automatically attaches the 3D character under `Player/Visual`, maps the extracted textures/materials (`paint_basecolor.png`), calibrates ground foot alignment and CapsuleCollider2D, links `Player3D.controller`, and disables the 2D sprite.
-* **`Toggle 2D Sprite vs 3D Model`**: Instant 1-click toggle to alternate between the 2D sprite visual and the 3D model without breaking scene state.
-* **`Generate 3D Animator Controller`**: Generates or updates `Assets/Animation/Player3D.controller`.
+Mixamo FBX files imported into Unity require Mecanim Humanoid retargeting:
+* **Avatar Setup:** Set to `ModelImporterAvatarSetup.CreateFromThisModel`.
+* Each clip creates its own native Humanoid Avatar (`mixamorig:Hips` hierarchy), allowing Mecanim to cleanly retarget motions onto the custom character model (`CharacterAvatar`).
+* **Root Motion Handling:**
+  * For `Running.fbx`, forward displacement is stripped into `Run_InPlace.anim` with `RootT.z` zeroed out so Rigidbody2D controls world translation.
+  * Combat and Jump clips (`Boxing 1`, `Boxing 2`, `Kick`, `Run to kick`, `Fighting Idle`, `Jumping`, `Running Jump`) feature natural zero-displacement root motion and use `lockRootPositionXZ = true`.
+
+---
+
+## 6. Unity Editor Tools (`Tools > Alice in Helheim`)
+
+* **`Apply Blender Character to Player (With Textures)`**:
+  Attaches the 3D character under `Player/Visual`, maps the extracted textures/materials (`Character_Body_Mat` & `Character_Eyes_Mat`), calibrates ground foot alignment and CapsuleCollider2D, links `Player3D.controller`, and disables the 2D sprite.
+* **`Toggle 2D Sprite vs 3D Model`**:
+  Instant 1-click toggle to alternate between the 2D sprite visual and the 3D model without breaking scene state.
+* **`Generate 3D Animator Controller`**:
+  Generates `Assets/Animation/Player3D.controller` if missing.
+* **`Rebuild Full 3D Animator Controller (Combos & Jumps)`**:
+  Reconstructs all 10 states, clips, parameters, and combo/jump transitions from scratch.

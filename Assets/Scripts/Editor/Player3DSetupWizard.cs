@@ -284,7 +284,18 @@ public static class Player3DSetupWizard
         {
             return AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
         }
+        return BuildFullAnimatorController();
+    }
 
+    [MenuItem("Tools/Alice in Helheim/Rebuild Full 3D Animator Controller (Combos & Jumps)", false, 4)]
+    public static void ForceRebuildAnimatorController()
+    {
+        BuildFullAnimatorController();
+        EditorUtility.DisplayDialog("Animator Controller", "3D Animator Controller rebuilt successfully with all 10 combat, locomotion, and jump states!", "OK");
+    }
+
+    public static AnimatorController BuildFullAnimatorController()
+    {
         string directory = Path.GetDirectoryName(ControllerPath);
         if (!Directory.Exists(directory) && directory != null)
         {
@@ -293,14 +304,17 @@ public static class Player3DSetupWizard
 
         AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
 
-        // Parameters
+        // Core Parameters
         controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
         controller.AddParameter("MoveSpeed", AnimatorControllerParameterType.Float);
         controller.AddParameter("IsGrounded", AnimatorControllerParameterType.Bool);
         controller.AddParameter("IsMoving", AnimatorControllerParameterType.Bool);
         controller.AddParameter("IsFalling", AnimatorControllerParameterType.Bool);
-        controller.AddParameter("Jump", AnimatorControllerParameterType.Trigger);
-        controller.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
+        controller.AddParameter("InCombat", AnimatorControllerParameterType.Bool);
+        controller.AddParameter("AttackIndex", AnimatorControllerParameterType.Int);
+        controller.AddParameter("AttackTrigger", AnimatorControllerParameterType.Trigger);
+        controller.AddParameter("JumpTrigger", AnimatorControllerParameterType.Trigger);
+        controller.AddParameter("IsRunningJump", AnimatorControllerParameterType.Bool);
 
         // Backward compatibility parameters
         controller.AddParameter("Motion", AnimatorControllerParameterType.Float);
@@ -309,71 +323,288 @@ public static class Player3DSetupWizard
         controller.AddParameter("isGrounded", AnimatorControllerParameterType.Bool);
         controller.AddParameter("isJumping", AnimatorControllerParameterType.Trigger);
         controller.AddParameter("falling", AnimatorControllerParameterType.Bool);
+        controller.AddParameter("Jump", AnimatorControllerParameterType.Trigger);
+        controller.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
 
-        // Layers & States
-        var rootStateMachine = controller.layers[0].stateMachine;
+        var sm = controller.layers[0].stateMachine;
 
-        var idleState = rootStateMachine.AddState("Idle");
-        var runState = rootStateMachine.AddState("Run");
-        var jumpState = rootStateMachine.AddState("Jump");
-        var fallState = rootStateMachine.AddState("Fall");
-        var attackState = rootStateMachine.AddState("Attack");
+        // Load animation clips
+        AnimationClip idleClip = LoadClip("Assets/Animation/Idle.fbx");
+        AnimationClip lookAroundClip = LoadClip("Assets/Animation/Idle Look Around.fbx");
+        AnimationClip runClip = LoadClip("Assets/Animation/Run_InPlace.anim") ?? LoadClip("Assets/Animation/Running.fbx");
+        AnimationClip fightIdleClip = LoadClip("Assets/Animation/Combat/Fighting Idle.fbx");
+        AnimationClip boxing1Clip = LoadClip("Assets/Animation/Combat/Boxing 1.fbx");
+        AnimationClip boxing2Clip = LoadClip("Assets/Animation/Combat/Boxing 2.fbx");
+        AnimationClip kickClip = LoadClip("Assets/Animation/Combat/Kick.fbx");
+        AnimationClip runKickClip = LoadClip("Assets/Animation/Combat/Run to kick.fbx");
+        AnimationClip jumpClip = LoadClip("Assets/Animation/Jumping.fbx");
+        AnimationClip runningJumpClip = LoadClip("Assets/Animation/Running Jump.fbx");
 
-        rootStateMachine.defaultState = idleState;
+        // Create States
+        var sIdle = sm.AddState("Idle"); sIdle.motion = idleClip;
+        var sLookAround = sm.AddState("Idle Look Around"); sLookAround.motion = lookAroundClip;
+        var sRun = sm.AddState("Run"); sRun.motion = runClip;
+        var sFightIdle = sm.AddState("Fighting Idle"); sFightIdle.motion = fightIdleClip;
+        var sBoxing1 = sm.AddState("Boxing 1"); sBoxing1.motion = boxing1Clip;
+        var sBoxing2 = sm.AddState("Boxing 2"); sBoxing2.motion = boxing2Clip;
+        var sKick = sm.AddState("Kick"); sKick.motion = kickClip;
+        var sRunKick = sm.AddState("Run to kick"); sRunKick.motion = runKickClip;
+        var sJump = sm.AddState("Jump"); sJump.motion = jumpClip;
+        var sRunningJump = sm.AddState("Running Jump"); sRunningJump.motion = runningJumpClip;
 
-        // Transitions: Idle <-> Run
-        var toRun = idleState.AddTransition(runState);
-        toRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
-        toRun.hasExitTime = false;
-        toRun.duration = 0.1f;
+        sm.defaultState = sIdle;
 
-        var toIdle = runState.AddTransition(idleState);
-        toIdle.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
-        toIdle.hasExitTime = false;
-        toIdle.duration = 0.1f;
+        // 1. Idle transitions
+        var toLookAround = sIdle.AddTransition(sLookAround);
+        toLookAround.hasExitTime = true;
+        toLookAround.exitTime = 1f;
+        toLookAround.duration = 0.4f;
+        toLookAround.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+        toLookAround.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
 
-        // Transitions: AnyState -> Jump
-        var anyToJump = rootStateMachine.AddAnyStateTransition(jumpState);
-        anyToJump.AddCondition(AnimatorConditionMode.If, 0, "Jump");
+        var toRunFromIdle = sIdle.AddTransition(sRun);
+        toRunFromIdle.hasExitTime = false;
+        toRunFromIdle.duration = 0.15f;
+        toRunFromIdle.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+
+        var toFightFromIdle = sIdle.AddTransition(sFightIdle);
+        toFightFromIdle.hasExitTime = false;
+        toFightFromIdle.duration = 0.2f;
+        toFightFromIdle.AddCondition(AnimatorConditionMode.If, 0, "InCombat");
+
+        var toBox1FromIdle = sIdle.AddTransition(sBoxing1);
+        toBox1FromIdle.hasExitTime = false;
+        toBox1FromIdle.duration = 0.08f;
+        toBox1FromIdle.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
+        toBox1FromIdle.AddCondition(AnimatorConditionMode.Equals, 0, "AttackIndex");
+
+        var toRunKickFromIdle = sIdle.AddTransition(sRunKick);
+        toRunKickFromIdle.hasExitTime = false;
+        toRunKickFromIdle.duration = 0.08f;
+        toRunKickFromIdle.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
+        toRunKickFromIdle.AddCondition(AnimatorConditionMode.Equals, 3, "AttackIndex");
+
+        // 2. Idle Look Around transitions
+        var toIdleFromLookAround = sLookAround.AddTransition(sIdle);
+        toIdleFromLookAround.hasExitTime = true;
+        toIdleFromLookAround.exitTime = 1f;
+        toIdleFromLookAround.duration = 0.4f;
+        toIdleFromLookAround.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+        toIdleFromLookAround.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
+
+        var toRunFromLookAround = sLookAround.AddTransition(sRun);
+        toRunFromLookAround.hasExitTime = false;
+        toRunFromLookAround.duration = 0.15f;
+        toRunFromLookAround.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+
+        var toFightFromLookAround = sLookAround.AddTransition(sFightIdle);
+        toFightFromLookAround.hasExitTime = false;
+        toFightFromLookAround.duration = 0.2f;
+        toFightFromLookAround.AddCondition(AnimatorConditionMode.If, 0, "InCombat");
+
+        var toBox1FromLookAround = sLookAround.AddTransition(sBoxing1);
+        toBox1FromLookAround.hasExitTime = false;
+        toBox1FromLookAround.duration = 0.08f;
+        toBox1FromLookAround.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
+        toBox1FromLookAround.AddCondition(AnimatorConditionMode.Equals, 0, "AttackIndex");
+
+        var toRunKickFromLookAround = sLookAround.AddTransition(sRunKick);
+        toRunKickFromLookAround.hasExitTime = false;
+        toRunKickFromLookAround.duration = 0.08f;
+        toRunKickFromLookAround.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
+        toRunKickFromLookAround.AddCondition(AnimatorConditionMode.Equals, 3, "AttackIndex");
+
+        // 3. Run transitions
+        var toIdleFromRun = sRun.AddTransition(sIdle);
+        toIdleFromRun.hasExitTime = false;
+        toIdleFromRun.duration = 0.15f;
+        toIdleFromRun.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+        toIdleFromRun.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
+
+        var toFightFromRun = sRun.AddTransition(sFightIdle);
+        toFightFromRun.hasExitTime = false;
+        toFightFromRun.duration = 0.15f;
+        toFightFromRun.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+        toFightFromRun.AddCondition(AnimatorConditionMode.If, 0, "InCombat");
+
+        var toBox1FromRun = sRun.AddTransition(sBoxing1);
+        toBox1FromRun.hasExitTime = false;
+        toBox1FromRun.duration = 0.08f;
+        toBox1FromRun.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
+        toBox1FromRun.AddCondition(AnimatorConditionMode.Equals, 0, "AttackIndex");
+
+        var toRunKickFromRun = sRun.AddTransition(sRunKick);
+        toRunKickFromRun.hasExitTime = false;
+        toRunKickFromRun.duration = 0.08f;
+        toRunKickFromRun.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
+        toRunKickFromRun.AddCondition(AnimatorConditionMode.Equals, 3, "AttackIndex");
+
+        // 4. Fighting Idle transitions
+        var toIdleFromFight = sFightIdle.AddTransition(sIdle);
+        toIdleFromFight.hasExitTime = false;
+        toIdleFromFight.duration = 0.35f;
+        toIdleFromFight.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
+        toIdleFromFight.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+
+        var toRunFromFight = sFightIdle.AddTransition(sRun);
+        toRunFromFight.hasExitTime = false;
+        toRunFromFight.duration = 0.15f;
+        toRunFromFight.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+
+        var toBox1FromFight = sFightIdle.AddTransition(sBoxing1);
+        toBox1FromFight.hasExitTime = false;
+        toBox1FromFight.duration = 0.08f;
+        toBox1FromFight.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
+        toBox1FromFight.AddCondition(AnimatorConditionMode.Equals, 0, "AttackIndex");
+
+        var toRunKickFromFight = sFightIdle.AddTransition(sRunKick);
+        toRunKickFromFight.hasExitTime = false;
+        toRunKickFromFight.duration = 0.08f;
+        toRunKickFromFight.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
+        toRunKickFromFight.AddCondition(AnimatorConditionMode.Equals, 3, "AttackIndex");
+
+        // 5. Combat combo transitions
+        var toBox2 = sBoxing1.AddTransition(sBoxing2);
+        toBox2.hasExitTime = false;
+        toBox2.duration = 0.08f;
+        toBox2.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
+        toBox2.AddCondition(AnimatorConditionMode.Equals, 1, "AttackIndex");
+
+        var box1ToFight = sBoxing1.AddTransition(sFightIdle);
+        box1ToFight.hasExitTime = true;
+        box1ToFight.exitTime = 0.82f;
+        box1ToFight.duration = 0.15f;
+        box1ToFight.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+
+        var box1ToRun = sBoxing1.AddTransition(sRun);
+        box1ToRun.hasExitTime = true;
+        box1ToRun.exitTime = 0.82f;
+        box1ToRun.duration = 0.15f;
+        box1ToRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+
+        var toKick = sBoxing2.AddTransition(sKick);
+        toKick.hasExitTime = false;
+        toKick.duration = 0.08f;
+        toKick.AddCondition(AnimatorConditionMode.If, 0, "AttackTrigger");
+        toKick.AddCondition(AnimatorConditionMode.Equals, 2, "AttackIndex");
+
+        var box2ToFight = sBoxing2.AddTransition(sFightIdle);
+        box2ToFight.hasExitTime = true;
+        box2ToFight.exitTime = 0.82f;
+        box2ToFight.duration = 0.15f;
+        box2ToFight.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+
+        var box2ToRun = sBoxing2.AddTransition(sRun);
+        box2ToRun.hasExitTime = true;
+        box2ToRun.exitTime = 0.82f;
+        box2ToRun.duration = 0.15f;
+        box2ToRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+
+        var kickToFight = sKick.AddTransition(sFightIdle);
+        kickToFight.hasExitTime = true;
+        kickToFight.exitTime = 0.88f;
+        kickToFight.duration = 0.15f;
+        kickToFight.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+
+        var kickToRun = sKick.AddTransition(sRun);
+        kickToRun.hasExitTime = true;
+        kickToRun.exitTime = 0.88f;
+        kickToRun.duration = 0.15f;
+        kickToRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+
+        var runKickToFight = sRunKick.AddTransition(sFightIdle);
+        runKickToFight.hasExitTime = true;
+        runKickToFight.exitTime = 0.82f;
+        runKickToFight.duration = 0.15f;
+        runKickToFight.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+
+        var runKickToRun = sRunKick.AddTransition(sRun);
+        runKickToRun.hasExitTime = true;
+        runKickToRun.exitTime = 0.82f;
+        runKickToRun.duration = 0.15f;
+        runKickToRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+
+        // 6. Jump transitions (AnyState)
+        var anyToJump = sm.AddAnyStateTransition(sJump);
         anyToJump.hasExitTime = false;
         anyToJump.duration = 0.05f;
+        anyToJump.AddCondition(AnimatorConditionMode.If, 0, "JumpTrigger");
+        anyToJump.AddCondition(AnimatorConditionMode.IfNot, 0, "IsRunningJump");
 
-        // Jump -> Fall
-        var jumpToFall = jumpState.AddTransition(fallState);
-        jumpToFall.AddCondition(AnimatorConditionMode.If, 0, "IsFalling");
-        jumpToFall.hasExitTime = false;
-        jumpToFall.duration = 0.1f;
+        var anyToRunningJump = sm.AddAnyStateTransition(sRunningJump);
+        anyToRunningJump.hasExitTime = false;
+        anyToRunningJump.duration = 0.05f;
+        anyToRunningJump.AddCondition(AnimatorConditionMode.If, 0, "JumpTrigger");
+        anyToRunningJump.AddCondition(AnimatorConditionMode.If, 0, "IsRunningJump");
 
-        // Transitions: AnyState -> Fall (walked off ledge)
-        var anyToFall = rootStateMachine.AddAnyStateTransition(fallState);
-        anyToFall.AddCondition(AnimatorConditionMode.If, 0, "IsFalling");
-        anyToFall.AddCondition(AnimatorConditionMode.IfNot, 0, "IsGrounded");
-        anyToFall.hasExitTime = false;
-        anyToFall.duration = 0.1f;
+        // 7. Jump landing transitions
+        var jumpToRun = sJump.AddTransition(sRun);
+        jumpToRun.hasExitTime = false;
+        jumpToRun.duration = 0.12f;
+        jumpToRun.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
+        jumpToRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
 
-        // Fall -> Idle (landing)
-        var fallToIdle = fallState.AddTransition(idleState);
-        fallToIdle.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
-        fallToIdle.hasExitTime = false;
-        fallToIdle.duration = 0.08f;
+        var jumpToFight = sJump.AddTransition(sFightIdle);
+        jumpToFight.hasExitTime = false;
+        jumpToFight.duration = 0.15f;
+        jumpToFight.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
+        jumpToFight.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+        jumpToFight.AddCondition(AnimatorConditionMode.If, 0, "InCombat");
 
-        // Transitions: AnyState -> Attack
-        var anyToAttack = rootStateMachine.AddAnyStateTransition(attackState);
-        anyToAttack.AddCondition(AnimatorConditionMode.If, 0, "Attack");
-        anyToAttack.hasExitTime = false;
-        anyToAttack.duration = 0.04f;
+        var jumpToIdle = sJump.AddTransition(sIdle);
+        jumpToIdle.hasExitTime = false;
+        jumpToIdle.duration = 0.15f;
+        jumpToIdle.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
+        jumpToIdle.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+        jumpToIdle.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
 
-        // Attack -> Idle
-        var attackToIdle = attackState.AddTransition(idleState);
-        attackToIdle.hasExitTime = true;
-        attackToIdle.exitTime = 0.9f;
-        attackToIdle.duration = 0.1f;
+        // Running Jump landing transitions
+        var runJumpToRun = sRunningJump.AddTransition(sRun);
+        runJumpToRun.hasExitTime = false;
+        runJumpToRun.duration = 0.12f;
+        runJumpToRun.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
+        runJumpToRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+
+        var runJumpToFight = sRunningJump.AddTransition(sFightIdle);
+        runJumpToFight.hasExitTime = false;
+        runJumpToFight.duration = 0.15f;
+        runJumpToFight.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
+        runJumpToFight.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+        runJumpToFight.AddCondition(AnimatorConditionMode.If, 0, "InCombat");
+
+        var runJumpToIdle = sRunningJump.AddTransition(sIdle);
+        runJumpToIdle.hasExitTime = false;
+        runJumpToIdle.duration = 0.15f;
+        runJumpToIdle.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
+        runJumpToIdle.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+        runJumpToIdle.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log($"[AliceinHelheim] Created 3D Animator Controller at {ControllerPath}");
+        Debug.Log($"[AliceinHelheim] Generated 3D Animator Controller at {ControllerPath}");
 
         return controller;
+    }
+
+    private static AnimationClip LoadClip(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return null;
+
+        if (path.EndsWith(".anim"))
+            return AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+
+        var objects = AssetDatabase.LoadAllAssetsAtPath(path);
+        if (objects != null)
+        {
+            foreach (var obj in objects)
+            {
+                if (obj is AnimationClip clip && !clip.name.StartsWith("__preview__"))
+                {
+                    return clip;
+                }
+            }
+        }
+        return null;
     }
 
     private static void CreatePrototypeMesh(Transform visualRoot)
