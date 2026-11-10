@@ -24,9 +24,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform visualRoot;
     [Tooltip("Interpolation speed for turning yaw between left and right (used if Smooth Turning is enabled).")]
     [SerializeField] private float turnSpeed = 30f;
-    [Tooltip("Yaw tilt toward the camera (in degrees). Set to 0 for pure side-profile sidescroller facing (strict 90° right / 270° left).")]
-    [Range(0f, 45f)]
-    [SerializeField] private float cameraFacingTilt = 0f;
+    [Tooltip("Target yaw rotation when idle and facing right (in degrees). Balances Idle clip's slight leftward head/torso twist for crisp +X right facing.")]
+    [SerializeField] private float idleRightYaw = 105f;
+    [Tooltip("Target yaw rotation when running, jumping, or attacking right (in degrees).")]
+    [SerializeField] private float moveRightYaw = 90f;
+    [Tooltip("Target yaw rotation when facing left (in degrees).")]
+    [SerializeField] private float leftYaw = 270f;
     [Tooltip("Instant flip (classic crisp sidescroller feel) or smooth rotation interpolation.")]
     [SerializeField] private bool smoothTurning = false;
 
@@ -71,9 +74,11 @@ public class PlayerController : MonoBehaviour
     public bool inCombat = false;
     private bool isJumpPressed = false;
     private float facing = 1f; // 1 = Right, 0 = Left
-    private float targetYaw = 90f;
+    private float targetYaw = 105f;
     private int currentComboIndex = 0; // 0 = Boxing 1, 1 = Boxing 2, 2 = Kick, 3 = Run to kick
     private float lastAttackTime = -10f;
+    private float lastJumpTime = -10f;
+    private float lastGroundedTime = -10f;
     private float combatTimer = 0f;
 
     // Cached Animator Parameter Hashes for safe setting across 2D & 3D controllers
@@ -218,6 +223,13 @@ public class PlayerController : MonoBehaviour
         {
             playerRB.linearVelocity = new Vector2(moveInput.x * moveSpeed, playerRB.linearVelocity.y);
         }
+        else if (Mathf.Abs(moveInput.x) > 0.1f)
+        {
+            // Responsive mid-air steering / velocity preservation while holding direction
+            float targetVelX = moveInput.x * moveSpeed;
+            float newVelX = Mathf.MoveTowards(playerRB.linearVelocity.x, targetVelX, moveSpeed * 5f * Time.fixedDeltaTime);
+            playerRB.linearVelocity = new Vector2(newVelX, playerRB.linearVelocity.y);
+        }
     }
 
     //----------------------------------------------------------------------
@@ -225,6 +237,14 @@ public class PlayerController : MonoBehaviour
 
     void CheckGround()
     {
+        // Don't flag grounded during initial jump liftoff (first 0.15s or while ascending)
+        if (Time.time - lastJumpTime < 0.15f || (playerRB != null && playerRB.linearVelocity.y > 0.5f))
+        {
+            isGrounded = false;
+            isFalling = false;
+            return;
+        }
+
         Vector2 checkOrigin;
         float radius = groundCheckRadius;
 
@@ -241,6 +261,10 @@ public class PlayerController : MonoBehaviour
 
         RaycastHit2D hit = Physics2D.CircleCast(checkOrigin, radius, Vector2.down, groundCheckDistance, groundLayer);
         isGrounded = (hit.collider != null);
+        if (isGrounded)
+        {
+            lastGroundedTime = Time.time;
+        }
 
         // Falling state
         isFalling = (!isGrounded && playerRB != null && playerRB.linearVelocity.y < fallThreshold);
@@ -264,22 +288,27 @@ public class PlayerController : MonoBehaviour
                 UpdateTargetRotation(false);
             }
         }
+
+        // Refresh yaw target when shifting between moving and idle
+        UpdateTargetRotation(false);
     }
 
     void UpdateTargetRotation(bool instant)
     {
         // 2.5D Sidescroller Yaw Orientation:
-        // Pure sidescroller: Facing Right (+X) = 90 deg, Facing Left (-X) = 270 deg.
-        // Camera is at -Z looking forward along +Z. Tilting toward viewer/camera (-Z):
-        // Right: 90 + cameraFacingTilt
-        // Left:  270 - cameraFacingTilt
+        // When facing right:
+        // - Idle: idleRightYaw (105°) aligns head/torso symmetrically with Left Idle (270°)
+        // - Move / Combat / Jump: moveRightYaw (90°) faces straight along +X
+        // When facing left:
+        // - leftYaw (270°) ("left the same as before")
         if (facing == 1f)
         {
-            targetYaw = 90f + cameraFacingTilt;
+            bool isIdle = !isMoving && isGrounded && !inCombat && !isAttacking;
+            targetYaw = isIdle ? idleRightYaw : moveRightYaw;
         }
         else
         {
-            targetYaw = 270f - cameraFacingTilt;
+            targetYaw = leftYaw;
         }
 
         if (instant && visualRoot != null)
@@ -293,12 +322,16 @@ public class PlayerController : MonoBehaviour
         if (visualRoot == null) return;
 
         Quaternion targetRot = Quaternion.Euler(0f, targetYaw, 0f);
-        if (smoothTurning && turnSpeed > 0f)
+
+        // If smoothTurning is enabled OR if adjusting slightly between idle and move yaw on the right, blend smoothly
+        bool isMinorAngleAdjustment = Mathf.Abs(Mathf.DeltaAngle(visualRoot.localEulerAngles.y, targetYaw)) < 65f;
+        if (smoothTurning || isMinorAngleAdjustment)
         {
             visualRoot.localRotation = Quaternion.Slerp(visualRoot.localRotation, targetRot, turnSpeed * Time.deltaTime);
         }
         else
         {
+            // Crisp instant 180° flip between Left and Right
             visualRoot.localRotation = targetRot;
         }
     }
@@ -307,11 +340,19 @@ public class PlayerController : MonoBehaviour
     {
         if (isAttacking) return;
 
-        if (control.Player.Jump.triggered && isGrounded)
+        bool canJump = isGrounded || (Time.time - lastGroundedTime <= 0.12f && Time.time - lastJumpTime >= 0.2f);
+        if (control.Player.Jump.triggered && canJump)
         {
             playerRB.linearVelocity = new Vector2(playerRB.linearVelocity.x, 0f);
             playerRB.AddForce(Vector2.up * jumpMultiplier, ForceMode2D.Impulse);
 
+            bool isRunningJump = isMoving || Mathf.Abs(playerRB.linearVelocity.x) > 0.5f;
+            lastJumpTime = Time.time;
+            lastGroundedTime = -10f;
+            isGrounded = false;
+
+            SafeSetBool("IsRunningJump", isRunningJump);
+            SafeSetBool("IsGrounded", false);
             SafeSetTrigger("JumpTrigger");
             SafeSetTrigger("isJumping");
             SafeSetTrigger("Jump");

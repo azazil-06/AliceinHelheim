@@ -110,6 +110,7 @@ public static class Player3DSetupWizard
         // 8. Connect to PlayerController & disable 2D SpriteRenderer
         playerController.SetVisualRoot(visualTransform);
         visualTransform.localPosition = new Vector3(0f, -0.022f, 0f);
+        visualTransform.localRotation = Quaternion.Euler(0f, 105f, 0f);
         playerGO.transform.rotation = Quaternion.identity;
 
         CapsuleCollider2D capsule = playerGO.GetComponent<CapsuleCollider2D>();
@@ -287,11 +288,16 @@ public static class Player3DSetupWizard
         return BuildFullAnimatorController();
     }
 
-    [MenuItem("Tools/Alice in Helheim/Rebuild Full 3D Animator Controller (In-Place Combat & Unified Jump)", false, 4)]
+    [MenuItem("Tools/Alice in Helheim/Rebuild Full 3D Animator Controller (Combos & Jumps)", false, 4)]
     public static void ForceRebuildAnimatorController()
     {
         BuildFullAnimatorController();
-        EditorUtility.DisplayDialog("Animator Controller", "3D Animator Controller rebuilt successfully with in-place combat, locomotion, and unified jump!", "OK");
+        EditorUtility.DisplayDialog("Animator Controller", "3D Animator Controller rebuilt successfully with in-place combat, locomotion, running jump, and stationary jump!", "OK");
+    }
+
+    public static void BuildFullAnimatorControllerBatch()
+    {
+        BuildFullAnimatorController();
     }
 
     public static AnimatorController BuildFullAnimatorController()
@@ -336,9 +342,10 @@ public static class Player3DSetupWizard
         AnimationClip boxing2Clip = LoadClip("Assets/Animation/Combat/Boxing_2_InPlace.anim") ?? LoadClip("Assets/Animation/Combat/Boxing 2.fbx");
         AnimationClip kickClip = LoadClip("Assets/Animation/Combat/Kick_InPlace.anim") ?? LoadClip("Assets/Animation/Combat/Kick.fbx");
         AnimationClip runKickClip = LoadClip("Assets/Animation/Combat/Run_to_kick_InPlace.anim") ?? LoadClip("Assets/Animation/Combat/Run to kick.fbx");
-        AnimationClip jumpClip = LoadClip("Assets/Animation/Jumping.fbx");
+        AnimationClip jumpClip = LoadClip("Assets/Animation/Jumping_InPlace.anim") ?? LoadClip("Assets/Animation/Jumping.fbx");
+        AnimationClip runJumpClip = LoadClip("Assets/Animation/Running_Jump_InPlace.anim") ?? LoadClip("Assets/Animation/Running Jump.fbx");
 
-        // Create 8 States (No Idle Look Around, No Running Jump)
+        // Create 9 States (In-place combat combos, stationary jump, and running jump)
         var sIdle = sm.AddState("Idle"); sIdle.motion = idleClip;
         var sRun = sm.AddState("Run"); sRun.motion = runClip;
         var sFightIdle = sm.AddState("Fighting Idle"); sFightIdle.motion = fightIdleClip;
@@ -347,6 +354,7 @@ public static class Player3DSetupWizard
         var sKick = sm.AddState("Kick"); sKick.motion = kickClip;
         var sRunKick = sm.AddState("Run to kick"); sRunKick.motion = runKickClip;
         var sJump = sm.AddState("Jump"); sJump.motion = jumpClip;
+        var sRunJump = sm.AddState("Running Jump"); sRunJump.motion = runJumpClip;
 
         sm.defaultState = sIdle;
 
@@ -483,32 +491,44 @@ public static class Player3DSetupWizard
         runKickToRun.duration = 0.15f;
         runKickToRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
 
-        // 5. Unified Jump transitions (AnyState -> Jump on spacebar)
+        // 5. Jump transitions (AnyState -> Jump or Running Jump on spacebar)
         var anyToJump = sm.AddAnyStateTransition(sJump);
         anyToJump.hasExitTime = false;
         anyToJump.duration = 0.05f;
+        anyToJump.canTransitionToSelf = false;
         anyToJump.AddCondition(AnimatorConditionMode.If, 0, "JumpTrigger");
+        anyToJump.AddCondition(AnimatorConditionMode.IfNot, 0, "IsRunningJump");
 
-        // 6. Jump landing transitions
-        var jumpToRun = sJump.AddTransition(sRun);
-        jumpToRun.hasExitTime = false;
-        jumpToRun.duration = 0.12f;
-        jumpToRun.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
-        jumpToRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+        var anyToRunJump = sm.AddAnyStateTransition(sRunJump);
+        anyToRunJump.hasExitTime = false;
+        anyToRunJump.duration = 0.05f;
+        anyToRunJump.canTransitionToSelf = false;
+        anyToRunJump.AddCondition(AnimatorConditionMode.If, 0, "JumpTrigger");
+        anyToRunJump.AddCondition(AnimatorConditionMode.If, 0, "IsRunningJump");
 
-        var jumpToFight = sJump.AddTransition(sFightIdle);
-        jumpToFight.hasExitTime = false;
-        jumpToFight.duration = 0.15f;
-        jumpToFight.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
-        jumpToFight.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
-        jumpToFight.AddCondition(AnimatorConditionMode.If, 0, "InCombat");
+        // 6. Jump landing transitions (for both Jump and Running Jump)
+        foreach (var jState in new[] { sJump, sRunJump })
+        {
+            var jToRun = jState.AddTransition(sRun);
+            jToRun.hasExitTime = false;
+            jToRun.duration = 0.12f;
+            jToRun.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
+            jToRun.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
 
-        var jumpToIdle = sJump.AddTransition(sIdle);
-        jumpToIdle.hasExitTime = false;
-        jumpToIdle.duration = 0.15f;
-        jumpToIdle.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
-        jumpToIdle.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
-        jumpToIdle.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
+            var jToFight = jState.AddTransition(sFightIdle);
+            jToFight.hasExitTime = false;
+            jToFight.duration = 0.15f;
+            jToFight.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
+            jToFight.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+            jToFight.AddCondition(AnimatorConditionMode.If, 0, "InCombat");
+
+            var jToIdle = jState.AddTransition(sIdle);
+            jToIdle.hasExitTime = false;
+            jToIdle.duration = 0.15f;
+            jToIdle.AddCondition(AnimatorConditionMode.If, 0, "IsGrounded");
+            jToIdle.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
+            jToIdle.AddCondition(AnimatorConditionMode.IfNot, 0, "InCombat");
+        }
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();

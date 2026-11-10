@@ -33,12 +33,12 @@ Instead of rewriting the entire game physics to full 3D, the project utilizes a 
   * Eliminates Z-axis drift / slipping issues without needing rigid constraint hacks.
 
 * **Strict Sidescroller Facing (Left & Right Only):**
-  * The character is strictly binary in facing direction:
-    * **Facing Right (+X):** Exact yaw of `90°`.
-    * **Facing Left (-X):** Exact yaw of `270°` (`-90°`).
-  * **Instant Crisp Turn (`smoothTurning = false`):** Turning snaps instantly between Left (270°) and Right (90°) for classic responsive sidescroller controls without turning into the background.
+  * The character faces left (`-X`) or right (`+X`) in 2.5D sidescroller perspective:
+    * **Idle Right (`idleRightYaw`):** `105°` yaw balances the Idle clip's slight leftward head/torso twist so the character faces cleanly right (`+X`), symmetrical with Idle Left.
+    * **Move / Combat / Jump Right (`moveRightYaw`):** `90°` yaw for `Run`, `Jump`, `Running Jump`, and combat states facing right (`+X`).
+    * **Left (`leftYaw`):** `270°` (`-90°`) yaw across all states facing left (`-X`).
+  * **Turn & Blend Behavior:** Smoothly blends minor angle adjustments on the right (`105° <-> 90°`, `turnSpeed = 30f`) and snaps crisply (`smoothTurning = false`) between Left (`270°`) and Right (`90°`/`105°`) for responsive sidescroller controls.
   * **Idle Persistence:** When the player stops moving, the character remains facing in whichever direction it last moved (Left or Right). It never reverts to facing into the camera or wall.
-  * `cameraFacingTilt` is set to `0°` by default for a clean, authentic sidescroller silhouette.
 
 * **Ground Foot Alignment:**
   * `Visual.localPosition` is calibrated to `(0f, -0.022f, 0f)`.
@@ -66,16 +66,18 @@ When stationary (`Speed < 0.1`):
 * If no further attacks occur within this duration, the character smoothly eases back into standard **`Idle`**.
 * **Zero Delay Interrupt:** If movement or jumping input is received during `Fighting Idle`, the character transitions immediately to `Run` or `Jump` without waiting for the animation or timer to finish.
 
-### 4. Jump Mechanics (Press `Spacebar`)
-* Pressing Space triggers **`Jump`** (clip: `Assets/Animation/Jumping.fbx`), playing a clean, athletic vertical leap both when stationary and when in motion.
+### 4. Dual Jump Mechanics (Press `Spacebar`)
+* **Stationary Jump (`Jump`):** When stationary (`Speed < 0.1` and `|vx| <= 0.5`), pressing Space triggers `Jump` (`Assets/Animation/Jumping_InPlace.anim`).
+* **Running Jump (`Running Jump`):** When moving or carrying horizontal momentum (`isMoving || |vx| > 0.5`), pressing Space sets `IsRunningJump = true` and triggers `Running Jump` (`Assets/Animation/Running_Jump_InPlace.anim`).
+* **Coyote Time & Liftoff Guard:** Includes a `0.12s` coyote-time window for uneven terrain slopes and a `0.15s` / ascending-velocity ground-check guard so liftoff frames cannot prematurely cancel the jump state, plus mid-air horizontal steering in `FixedUpdate()`.
 * **Seamless Landing:** When `IsGrounded` becomes true upon contact with the terrain:
-  * Transitions directly into `Run` if horizontal speed is maintained.
+  * Transitions directly into `Run` if horizontal speed is maintained (`Speed > 0.1`).
   * Transitions into `Fighting Idle` if stationary and still within the 3-second combat timer.
   * Transitions into standard `Idle` if stationary and out of combat.
 
 ---
 
-## 4. Animation State Machine Breakdown (`Player3D.controller`)
+## 4. Animation State Machine Breakdown (`Player3D.controller` — 9 States)
 
 Located at: `Assets/Animation/Player3D.controller`
 
@@ -88,13 +90,15 @@ Located at: `Assets/Animation/Player3D.controller`
 | **`Boxing 2`** | `Assets/Animation/Combat/Boxing_2_InPlace.anim` | No | Stationary combo second hit (in-place). Chains into `Kick` on next `AttackTrigger`. |
 | **`Kick`** | `Assets/Animation/Combat/Kick_InPlace.anim` | No | Stationary combo finisher (in-place). Exits to `Fighting Idle`. |
 | **`Run to kick`** | `Assets/Animation/Combat/Run_to_kick_InPlace.anim` | No | Sprinting attack (in-place). Triggered by `AttackTrigger` when `Speed > 0.1`. Exits to `Fighting Idle`. |
-| **`Jump`** | `Assets/Animation/Jumping.fbx` | No | Unified jump state. AnyState -> `Jump` (`JumpTrigger`). |
+| **`Jump`** | `Assets/Animation/Jumping_InPlace.anim` | No | Stationary vertical jump (`AnyState -> Jump` when `JumpTrigger && !IsRunningJump`). |
+| **`Running Jump`** | `Assets/Animation/Running_Jump_InPlace.anim` | No | Running forward leap (`AnyState -> Running Jump` when `JumpTrigger && IsRunningJump`). |
 
 ---
 
-## 5. In-Place Combat Motion Standardization
+## 5. In-Place Motion Standardization
 
 Raw Mixamo animations frequently contain significant forward root translation drift:
+* **Raw `Running Jump.fbx`** drifted forward by **+4.18m** in `RootT.z`.
 * **Raw `Run to kick.fbx`** contained a massive **+1.98m forward drift** in `RootT.z`.
 * **Raw `Kick.fbx`** drifted forward by **+0.48m**.
 * **Raw `Boxing 1.fbx`** drifted forward by **+0.45m**.
@@ -103,10 +107,10 @@ Raw Mixamo animations frequently contain significant forward root translation dr
 In a 2.5D sidescroller where `Rigidbody2D` and `CapsuleCollider2D` govern physics:
 1. Built-in animation root translation pushes the 3D visual mesh away from the 2D physics collider.
 2. When the animation clip completes, the visual mesh abruptly snaps back to the collider position, causing jarring hitching/jerking.
-3. Furthermore, script lunges (`playerRB.AddForce`) doubled with the animation displacement.
+3. Furthermore, script lunges (`playerRB.AddForce`) and jump arcs doubled with the animation displacement.
 
 **The Fix:**
-All combat animations were duplicated into clean `_InPlace.anim` assets where `RootT.z` and `RootT.x` are flattened to zero. The visual mesh remains perfectly anchored to the `CapsuleCollider2D`, while `PlayerController` provides smooth, responsive, physics-driven lunges that properly collide with walls, enemies, and obstacles without visual distortion or snapping.
+Locomotion, jump, and combat animations were duplicated into clean `_InPlace.anim` assets where `RootT.z` and `RootT.x` are flattened to zero. The visual mesh remains perfectly anchored to the `CapsuleCollider2D`, while `PlayerController` provides smooth, responsive, physics-driven movement, jumps, and lunges that properly collide with walls, slopes, enemies, and obstacles without visual distortion or snapping.
 
 ---
 
@@ -114,27 +118,27 @@ All combat animations were duplicated into clean `_InPlace.anim` assets where `R
 
 Mixamo FBX files imported into Unity require Mecanim Humanoid retargeting:
 * **Avatar Setup:** Set to `ModelImporterAvatarSetup.CreateFromThisModel`.
-* Each clip creates its own native Humanoid Avatar (`mixamorig:Hips` hierarchy), allowing Mecanim to cleanly retarget motions onto the custom character model (`CharacterAvatar`).
+* Each clip creates its own native Humanoid Avatar (`Hips` hierarchy), allowing Mecanim to cleanly retarget motions onto the custom character model (`CharacterAvatar`).
 * **Root Motion Handling:**
-  * For `Running.fbx`, forward displacement is stripped into `Run_InPlace.anim` with `RootT.z` zeroed out so Rigidbody2D controls world translation.
-  * Combat and Jump clips (`Boxing 1`, `Boxing 2`, `Kick`, `Run to kick`, `Fighting Idle`, `Jumping`, `Running Jump`) feature natural zero-displacement root motion and use `lockRootPositionXZ = true`.
+  * For `Running.fbx`, `Jumping.fbx`, `Running Jump.fbx`, and all `Combat/*.fbx` clips, forward displacement is stripped into `*_InPlace.anim` clips with `RootT.x` and `RootT.z` zeroed out so `Rigidbody2D` controls world translation.
+  * `Animator.applyRootMotion` stays `false` (`cullingMode = AlwaysAnimate`), and `SkinnedMeshRenderer.updateWhenOffscreen = true`.
 
 ---
 
-## 6. Unity Editor Tools (`Tools > Alice in Helheim`)
+## 7. Unity Editor Tools (`Tools > Alice in Helheim`)
 
 * **`Apply Blender Character to Player (With Textures)`**:
-  Attaches the 3D character under `Player/Visual`, maps the extracted textures/materials (`Character_Body_Mat` & `Character_Eyes_Mat`), calibrates ground foot alignment and CapsuleCollider2D, links `Player3D.controller`, and disables the 2D sprite.
+  Attaches the 3D character under `Player/Visual`, maps the extracted textures/materials (`Character_Body_Mat` & `Character_Eyes_Mat`), calibrates ground foot alignment and `CapsuleCollider2D`, sets default `Visual` yaw (`105°`), links `Player3D.controller`, and disables the 2D sprite.
 * **`Toggle 2D Sprite vs 3D Model`**:
   Instant 1-click toggle to alternate between the 2D sprite visual and the 3D model without breaking scene state.
 * **`Generate 3D Animator Controller`**:
   Generates `Assets/Animation/Player3D.controller` if missing.
-* **`Rebuild Full 3D Animator Controller (In-Place Combat & Unified Jump)`**:
-  Reconstructs all 8 in-place states, clips, parameters, and combo/jump transitions from scratch.
+* **`Rebuild Full 3D Animator Controller (Combos & Jumps)`**:
+  Reconstructs all 9 in-place states, clips, parameters, and combo/jump transitions from scratch.
 
 ---
 
-## 7. Procedural Animation Removal
+## 8. Procedural Animation Removal
 
 Per user feedback, procedural ponytail physics (`SoftBodyPonytail.cs`) was completely removed from the project:
 * The character relies entirely on clean, author-rigged Humanoid animation clips from Mixamo.
