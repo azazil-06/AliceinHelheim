@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [ExecuteAlways]
+[DefaultExecutionOrder(200)] // Runs after CinemachineBrain (order 100) so camera viewport calculation is accurate
 public class PlayerVignette : MonoBehaviour
 {
     [Header("Target Tracking")]

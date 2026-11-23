@@ -85,6 +85,7 @@ public class PlayerController : MonoBehaviour
     private readonly HashSet<string> _animParams = new HashSet<string>();
     private readonly RaycastHit2D[] _groundHits = new RaycastHit2D[8];
     private ContactFilter2D _groundFilter;
+    private Vector2 _groundNormal = Vector2.up;
 
     //------------------------------------------------------------------------------ 
     void Awake()
@@ -93,7 +94,13 @@ public class PlayerController : MonoBehaviour
         // Enforce upright identity rotation on Player root for strict 2D physics plane
         transform.rotation = Quaternion.identity;
 
+        ConfigureGroundFilter();
         ResolveActiveAnimator();
+    }
+
+    void OnValidate()
+    {
+        ConfigureGroundFilter();
     }
 
     void OnEnable()
@@ -193,23 +200,23 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // 2. Perform 2.5D Ground Check
-        CheckGround();
-
-        // 3. Jump, Combat & Movement Logic (Jump/Attack first so CheckRunAndIdle/rotation use current airborne state)
+        // 2. Jump, Combat & Movement Logic (Jump/Attack first so CheckRunAndIdle/rotation use current airborne state)
         CheckJump();
         CheckAttack();
         CheckRunAndIdle();
 
-        // 4. Update 3D Visual Yaw Rotation
+        // 3. Update 3D Visual Yaw Rotation
         UpdateVisualRotation();
 
-        // 5. Send Animation Parameters
+        // 4. Send Animation Parameters
         UpdateAnimator();
     }
 
     void FixedUpdate()
     {
+        // 1. Synchronous physics ground detection
+        CheckGround();
+
         if (isAttacking)
         {
             float slowedX = Mathf.Lerp(playerRB.linearVelocity.x, 0f, lungeFriction * Time.fixedDeltaTime);
@@ -223,10 +230,21 @@ public class PlayerController : MonoBehaviour
             playerRB.linearVelocity += Vector2.up * Physics2D.gravity.y * playerRB.gravityScale * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
         }
 
-        // Horizontal velocity
+        // Slope-aware locomotion velocity
         if (isGrounded)
         {
-            playerRB.linearVelocity = new Vector2(moveInput.x * moveSpeed, playerRB.linearVelocity.y);
+            if (Mathf.Abs(moveInput.x) > 0.05f)
+            {
+                // Drive velocity along slope tangent to prevent hopping downhill or bouncing uphill
+                Vector2 slopeTangent = new Vector2(_groundNormal.y, -_groundNormal.x).normalized;
+                Vector2 targetVel = slopeTangent * (moveInput.x * moveSpeed);
+                playerRB.linearVelocity = targetVel;
+            }
+            else
+            {
+                // Zero out linear velocity while standing still so character doesn't slip down slopes
+                playerRB.linearVelocity = Vector2.zero;
+            }
         }
         else if (Mathf.Abs(moveInput.x) > 0.1f)
         {
@@ -242,8 +260,8 @@ public class PlayerController : MonoBehaviour
 
     void CheckGround()
     {
-        // Don't flag grounded during initial jump liftoff or while clearly ascending
-        if (Time.time - lastJumpTime < 0.15f || (playerRB != null && playerRB.linearVelocity.y > 0.25f))
+        // Don't flag grounded during initial jump liftoff
+        if (Time.time - lastJumpTime < 0.15f)
         {
             isGrounded = false;
             isFalling = false;
@@ -254,22 +272,38 @@ public class PlayerController : MonoBehaviour
         float probeDepth = isGrounded ? groundCheckDistance : Mathf.Min(groundCheckDistance, 0.04f);
         GetGroundCheckCircle(probeDepth, out Vector2 checkOrigin, out float radius, out float castDistance);
 
-        ConfigureGroundFilter();
         int hitCount = Physics2D.CircleCast(checkOrigin, radius, Vector2.down, _groundFilter, _groundHits, castDistance);
         bool foundFloor = false;
+        Vector2 hitNormal = Vector2.up;
         for (int i = 0; i < hitCount; i++)
         {
             if (_groundHits[i].collider != null)
             {
                 foundFloor = true;
+                hitNormal = _groundHits[i].normal;
                 break;
             }
         }
 
-        isGrounded = foundFloor;
-        if (isGrounded)
+        if (foundFloor)
         {
-            lastGroundedTime = Time.time;
+            _groundNormal = hitNormal;
+            // Only flag airborne if moving away from ground surface at high speed (e.g. explosive launch / bouncing)
+            float normalVelocity = Vector2.Dot(playerRB.linearVelocity, _groundNormal);
+            if (playerRB.linearVelocity.y > 0.5f && normalVelocity > 1.2f)
+            {
+                isGrounded = false;
+            }
+            else
+            {
+                isGrounded = true;
+                lastGroundedTime = Time.time;
+            }
+        }
+        else
+        {
+            isGrounded = false;
+            _groundNormal = Vector2.up;
         }
 
         // Falling state

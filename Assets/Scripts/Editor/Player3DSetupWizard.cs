@@ -107,6 +107,12 @@ public static class Player3DSetupWizard
             EditorUtility.SetDirty(animator);
         }
 
+        // 7b. Foot grounding: add PlayerFootIK to the humanoid Animator object
+        if (animator != null && animator.isHuman && animator.GetComponent<PlayerFootIK>() == null)
+        {
+            Undo.AddComponent<PlayerFootIK>(animator.gameObject);
+        }
+
         // 8. Connect to PlayerController & remove any legacy 2D SpriteRenderer / root Animator
         playerController.SetVisualRoot(visualTransform);
         visualTransform.localPosition = new Vector3(0f, -0.022f, 0f);
@@ -303,6 +309,10 @@ public static class Player3DSetupWizard
         controller.AddParameter("IsRunningJump", AnimatorControllerParameterType.Bool);
 
         var sm = controller.layers[0].stateMachine;
+        // Enable IK Pass on the base layer so PlayerFootIK.OnAnimatorIK runs (humanoid foot grounding)
+        var ikLayers = controller.layers;
+        ikLayers[0].iKPass = true;
+        controller.layers = ikLayers;
 
         // Load animation clips (prefer in-place variants to prevent root translation drift)
         AnimationClip idleClip = LoadClip("Assets/Animation/Idle.fbx");

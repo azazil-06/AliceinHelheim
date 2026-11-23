@@ -1,12 +1,16 @@
 using UnityEngine;
 
+[DefaultExecutionOrder(200)] // Runs after CinemachineBrain (order 100) so camera position is current frame
 public class ParallaxBackground : MonoBehaviour
 {
     // is fixed when enabled fixes the frame to camera
     public bool isFixed;
     private Vector3 offset;
 
-    private float startPos, length;
+    private float startPos;
+    private float camStartX;
+    private float scrollOffset;
+    private float length;
     public GameObject cam;
     public float parallaxEffect;  // speed at which bg moves w.r.t cam
     
@@ -15,49 +19,64 @@ public class ParallaxBackground : MonoBehaviour
 
     void Start()
     {
+        if (cam == null && Camera.main != null)
+        {
+            cam = Camera.main.gameObject;
+        }
+
         startPos = transform.position.x;
-        offset = transform.position - cam.transform.position;
-        if (!isFixed) { 
-            length = GetComponent<SpriteRenderer>().bounds.size.x; 
+        if (cam != null)
+        {
+            camStartX = cam.transform.position.x;
+            offset = transform.position - cam.transform.position;
+        }
+
+        if (!isFixed)
+        {
+            var sr = GetComponent<SpriteRenderer>();
+            if (sr != null)
+            {
+                length = sr.bounds.size.x;
+            }
         }
     }
 
     void LateUpdate()
     {
+        if (cam == null) return;
+
         if (isFixed)
         {
-            // Calculate target position
             float targetX = cam.transform.position.x + offset.x;
-            // Smoothly lerp towards target
-            float smoothedX = Mathf.Lerp(transform.position.x, targetX, smoothing * Time.deltaTime);
-            
+            float factor = smoothing > 0f ? (1f - Mathf.Exp(-smoothing * Time.deltaTime)) : 1f;
+            float smoothedX = Mathf.Lerp(transform.position.x, targetX, factor);
             transform.position = new Vector3(smoothedX, transform.position.y, transform.position.z);
         }
         else
         {
-            float distance = cam.transform.position.x * parallaxEffect; // parallax effect 0= move with cam, 1= static
-            float movement = cam.transform.position.x * (1 - parallaxEffect);
+            float camDelta = cam.transform.position.x - camStartX;
+            float distance = camDelta * parallaxEffect;
+            float movement = camDelta * (1f - parallaxEffect);
 
-            // Calculate where the background SHOULD be
-            float targetX = startPos + distance;
-            
-            // Smoothly move towards that target position
-            float smoothedX = Mathf.Lerp(transform.position.x, targetX, smoothing * Time.deltaTime);
+            if (length > 0.001f)
+            {
+                // Infinite scrolling wrapping
+                if (movement > scrollOffset + length)
+                {
+                    scrollOffset += length;
+                    transform.position = new Vector3(transform.position.x + length, transform.position.y, transform.position.z);
+                }
+                else if (movement < scrollOffset - length)
+                {
+                    scrollOffset -= length;
+                    transform.position = new Vector3(transform.position.x - length, transform.position.y, transform.position.z);
+                }
+            }
+
+            float targetX = startPos + scrollOffset + distance;
+            float factor = smoothing > 0f ? (1f - Mathf.Exp(-smoothing * Time.deltaTime)) : 1f;
+            float smoothedX = Mathf.Lerp(transform.position.x, targetX, factor);
             transform.position = new Vector3(smoothedX, transform.position.y, transform.position.z);
-
-            // infinite scrolling
-            if (movement > startPos + length)
-            {
-                startPos += length;
-                // Snap the actual position forward so the Lerp doesn't cause a visible slide
-                transform.position = new Vector3(transform.position.x + length, transform.position.y, transform.position.z);
-            }
-            else if (movement < startPos - length)
-            {
-                startPos -= length;
-                // Snap the actual position backward
-                transform.position = new Vector3(transform.position.x - length, transform.position.y, transform.position.z);
-            }
         }
     }
 }

@@ -16,9 +16,8 @@ public class FireflyFollower : MonoBehaviour
     {
         if (player != null)
         {
-            // CHANGED: TransformPoint converts the local offset into world space, 
-            // factoring in the player's rotation and scale.
-            Vector3 targetPosition = player.TransformPoint(offset);
+            // Position fireflies relative to player without scaling by player scale
+            Vector3 targetPosition = player.position + player.rotation * offset;
             
             // Smoothly glide the emitter toward that position
             transform.position = Vector3.SmoothDamp(

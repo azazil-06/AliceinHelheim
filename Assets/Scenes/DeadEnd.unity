@@ -956,7 +956,7 @@ Transform:
   m_GameObject: {fileID: 430781420}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.833541, y: 5.91, z: -8.61}
+  m_LocalPosition: {x: 15.813518, y: 5.91, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1206,7 +1206,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.825811, y: 6.5106497, z: -8.61}
+  m_LocalPosition: {x: 15.804927, y: 6.5106096, z: -8.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1883,6 +1883,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 810881704}
   m_CullTransparentMesh: 1
+--- !u!1 &818640826 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d3152b0a680d493288e03753deff4419, type: 3}
+  m_PrefabInstance: {fileID: 1466917545}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &845072078
 GameObject:
   m_ObjectHideFlags: 0
@@ -4825,7 +4830,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d3152b0a680d493288e03753deff4419, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1466917548}
   m_SourcePrefab: {fileID: 100100000, guid: d3152b0a680d493288e03753deff4419, type: 3}
 --- !u!4 &1466917546 stripped
 Transform:
@@ -4837,6 +4845,33 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: d3152b0a680d493288e03753deff4419, type: 3}
   m_PrefabInstance: {fileID: 1466917545}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1466917548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 818640826}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1964951e72c00364e938f543efa21ad0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFootIK
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 16384
+  probeStartHeight: 0.6
+  probeLength: 1.8
+  fullPlantHeight: 0.06
+  releaseHeight: 0.28
+  weightSmoothing: 18
+  alignFootToSlope: 1
+  maxFootTilt: 20
+  lowerBodyForReach: 1
+  maxBodyDrop: 0.2
+  bodySmoothing: 14
+  debugCalls: 0
+  debugLastLayer: -1
 --- !u!4 &1488323475 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8839290923878878979, guid: dda886981af5ff8449eab6109675f6cd, type: 3}
@@ -9704,7 +9739,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1573125714}
   - component: {fileID: 1573125715}
-  - component: {fileID: 1573125716}
   - component: {fileID: 1573125717}
   m_Layer: 14
   m_Name: base_3_0
@@ -9790,22 +9824,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
---- !u!114 &1573125716
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1573125713}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 838f1d2b95f390542acc332e1b6b4360, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ParallaxBackground
-  isFixed: 0
-  cam: {fileID: 519420028}
-  parallaxEffect: 0.3
-  smoothing: 20
 --- !u!68 &1573125717
 EdgeCollider2D:
   m_ObjectHideFlags: 0
